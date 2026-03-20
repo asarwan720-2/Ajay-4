@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #f2f2f2;
+    }
+
+    .top-bar {
+      background: red;
+      height: 40px;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 400px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: red;
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+    }
+
+    .btn {
+      width: 95%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 25px;
+      border: none;
+      background: red;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .link {
+      color: gray;
+      font-size: 14px;
+      margin: 10px 0;
+      display: block;
+    }
+
+    .register {
+      background: red;
+    }
+  </style>
+
+</head>
+
+<body>
+
+<div class="top-bar"></div>
+
+<div class="container">
+
+  <h2>Login</h2>
+
+  <input type="text" placeholder="Mobile Number" id="mobile">
+  <input type="password" placeholder="Password" id="password">
+
+  <span class="link">Forgot Password?</span>
+
+  <button class="btn" onclick="login()">LOGIN</button>
+
+  <span class="link">New User?</span>
+
+  <button class="btn register" onclick="goRegister()">REGISTER</button>
+
+</div>
+
+<script>
+  function login() {
+    let mobile = document.getElementById("mobile").value;
+    let password = document.getElementById("password").value;
+
+    if(mobile === "" || password === "") {
+      alert("Fill all fields");
+      return;
+    }
+
+    alert("Login working 👍");
+  }
+
+  function goRegister() {
+    window.location.href = "register.html";
+  }
+</script>
+
+</body>
+</html>
