@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Signup</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<h2>Signup</h2>
+
+<input id="mobile" placeholder="Mobile"><br><br>
+<input id="password" placeholder="Password"><br><br>
+
+<button onclick="signup()">Signup</button>
+
+<p>Already account? <a href="login.html">Login</a></p>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://kvvmkddbkgrtiiuswikt.supabase.co",
+  "YOUR_API_KEY"
+);
+
+async function signup() {
+  let mobile = document.getElementById("mobile").value;
+  let password = document.getElementById("password").value;
+
+  let { error } = await supabase
+    .from("users")
+    .insert([{ mobile, password, amount: 0 }]);
+
+  if (!error) {
+    alert("Signup Success");
+    window.location.href = "login.html";
+  } else {
+    alert(error.message);
+  }
+}
+</script>
+</body>
+</html>
