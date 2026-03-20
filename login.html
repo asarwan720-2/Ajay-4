@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+<h2>Login</h2>
+
+<input id="mobile" placeholder="Mobile"><br><br>
+<input id="password" placeholder="Password"><br><br>
+
+<button onclick="login()">Login</button>
+
+<p>No account? <a href="signup.html">Signup</a></p>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://kvvmkddbkgrtiiuswikt.supabase.co",
+  "YOUR_API_KEY"
+);
+
+async function login() {
+  let mobile = document.getElementById("mobile").value;
+  let password = document.getElementById("password").value;
+
+  let { data } = await supabase
+    .from("users")
+    .select("*")
+    .eq("mobile", mobile)
+    .eq("password", password);
+
+  if (data.length > 0) {
+    localStorage.setItem("user", JSON.stringify(data[0]));
+    window.location.href = "dashboard.html";
+  } else {
+    alert("Login Failed");
+  }
+}
+</script>
+</body>
+</html>
