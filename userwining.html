@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Winning</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family:Arial;background:#f2f2f2;margin:0;}
+.header{background:green;color:#fff;text-align:center;padding:15px;}
+.card{background:#fff;margin:10px;padding:10px;border-radius:10px;}
+.win{color:green;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<div class="header">My Winning</div>
+<div id="list">Loading...</div>
+
+<script>
+
+// ✅ SUPABASE
+const client = window.supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+// ✅ GET USER ID (FIXED)
+let userData = localStorage.getItem("user");
+
+if(!userData){
+    alert("Login first!");
+}
+
+let userId;
+
+try{
+    let parsed = JSON.parse(userData);
+    userId = parsed.id;
+}catch{
+    userId = userData;
+}
+
+userId = userId ? userId.toString().trim() : "";
+
+console.log("USER ID:", userId);
+
+// 🔥 LOAD DATA
+async function loadData(){
+
+    let {data, error} = await client
+        .from("admin wining")
+        .select("*")
+        .eq("user_id", userId)   // ✅ FINAL FIX
+        .order("id",{ascending:false});
+
+    if(error){
+        console.log("ERROR:", error);
+        document.getElementById("list").innerHTML = "Error loading data";
+        return;
+    }
+
+    console.log("DATA:", data);
+
+    let html = "";
+
+    if(data && data.length > 0){
+
+        data.forEach(function(item){
+
+            let amount = item.amount || 0;
+
+            let date = item.created_at 
+                ? new Date(item.created_at).toLocaleString()
+                : "No Date";
+
+            html += `
+            <div class="card">
+                <div><b>Market:</b> ${item.market || "-"}</div>
+                <div><b>Date:</b> ${date}</div>
+                <div class="win">₹ ${amount}</div>
+            </div>
+            `;
+        });
+
+    }else{
+        html = "<h3 style='padding:10px;'>No Winning Found</h3>";
+    }
+
+    document.getElementById("list").innerHTML = html;
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>

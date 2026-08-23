@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Result</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="font-family:Arial;background:#f2f2f2;">
+
+<div style="margin:20px;background:#fff;padding:15px;border-radius:10px;">
+
+<h2 id="title"></h2>
+
+<div style="display:flex;justify-content:space-between;background:red;color:#fff;padding:10px;">
+  <div>Date</div>
+  <div>Result</div>
+</div>
+
+<div id="list"></div>
+
+</div>
+
+<script>
+let market = localStorage.getItem("market")
+document.getElementById("title").innerText = market
+
+let data = JSON.parse(localStorage.getItem("results")) || {}
+let results = (data[market] || []).slice(0,30)
+
+let list = document.getElementById("list")
+
+results.forEach(item=>{
+  let div = document.createElement("div")
+  div.style.display="flex"
+  div.style.justifyContent="space-between"
+  div.style.padding="10px"
+  div.style.borderBottom="1px solid #ddd"
+
+  div.innerHTML = `
+    <div>${item.date}</div>
+    <div style="color:blue;font-weight:bold">${item.number}</div>
+  `
+
+  list.appendChild(div)
+})
+</script>
+
+</body>
+</html>

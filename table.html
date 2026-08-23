@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+
+.frame {
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 900px;
+}
+
+td, th {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+
+.update-box {
+    background:#fff;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.approve{background:green;color:#fff;}
+.cancel{background:red;color:#fff;}
+
+.open-btn{
+    background:#4facfe;
+    color:#fff;
+    width:100%;
+    font-size:16px;
+    margin-top:10px;
+}
+
+#qrPreview{
+    width:100%;
+    height:auto;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<audio id="alarm" loop>
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
+</audio>
+
+<button onclick="stopAlarm()" style="background:red;color:#fff;padding:8px;border:none;border-radius:8px;margin-bottom:10px;">
+STOP ALARM
+</button>
+
+<h2>login</h2>
+
+<div class="update-box">
+    <select id="userId"></select>
+    <input type="number" id="amount" placeholder="Enter amount">
+    <select id="action">
+        <option value="deposit">Deposit</option>
+        <option value="withdraw">Withdraw</option>
+    </select>
+    <button onclick="updateBalance()">Update</button>
+</div>
+
+<div class="frame">
+<table>
+<thead>
+<tr>
+<th>id</th><th>name</th><th>mobile</th><th>password</th><th>balance</th>
+</tr>
+</thead>
+<tbody id="userData"></tbody>
+</table>
+</div>
+
+<!-- 🔥 BUTTON ADDED -->
+<h2>Deposit & Withdraw</h2>
+<div class="frame" style="height:auto; padding:15px;">
+<button class="open-btn" onclick="openPage()">Open Deposit / Withdraw Page</button>
+</div>
+
+<!-- GAME RESULT -->
+<h2>Game result</h2>
+<div class="frame">
+
+<div class="update-box">
+<select id="marketSelect"></select>
+<input type="text" id="marketValue" placeholder="Enter number">
+<button onclick="updateMarketNumber()">Update</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>id</th><th>name</th><th>number</th><th>open</th><th>close</th>
+</tr>
+</thead>
+<tbody id="gameData"></tbody>
+</table>
+
+</div>
+
+<h2>history</h2>
+
+<div class="frame">
+<table>
+<thead>
+<tr>
+<th>id</th><th>user_id</th><th>market</th><th>data</th><th>total</th><th>created_at</th>
+</tr>
+</thead>
+<tbody id="historyData"></tbody>
+</table>
+</div>
+
+<h2>QR Code Setup</h2>
+<div class="frame">
+
+<div class="update-box">
+<input type="file" id="qrFile">
+<button onclick="uploadQR()" class="approve">Update QR</button>
+<button onclick="deleteQR()" class="cancel">Delete QR</button>
+</div>
+
+<img id="qrPreview">
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+// 🔊 ALARM
+function playAlarm(){
+    document.getElementById("alarm").play().catch(()=>{})
+}
+function stopAlarm(){
+    let a = document.getElementById("alarm")
+    a.pause()
+    a.currentTime = 0
+}
+
+// 🔥 OPEN PAGE FUNCTION
+function openPage(){
+    window.location.href = "Depositwithdrow.html";
+}
+
+// USERS
+async function loadUsers(){
+    const { data } = await client.from("login").select("*")
+    let html="", opt=""
+    data.forEach(r=>{
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.name}</td>
+        <td>${r.mobile}</td>
+        <td>${r.password}</td>
+        <td>${r.balance}</td>
+        </tr>`
+        opt+=`<option value="${r.id}">${r.id}</option>`
+    })
+    userData.innerHTML=html
+    userId.innerHTML = opt
+}
+
+// BALANCE
+async function updateBalance(){
+    let id = userId.value
+    let amount = parseInt(document.getElementById("amount").value)
+    let act = document.getElementById("action").value
+
+    const { data } = await client.from("login").select("balance").eq("id",id).single()
+    let newBalance = act==="deposit" ? data.balance+amount : data.balance-amount
+
+    await client.from("login").update({balance:newBalance}).eq("id",id)
+    loadUsers()
+}
+
+// GAME
+async function loadGame(){
+    let { data } = await client.from("Game result").select("*")
+    let html="", opt=""
+    data.forEach(r=>{
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.name}</td>
+        <td>${r.number || ""}</td>
+        <td>${r.open}</td>
+        <td>${r.close}</td>
+        </tr>`
+        opt+=`<option value="${r.id}">${r.name}</option>`
+    })
+    gameData.innerHTML = html
+    marketSelect.innerHTML = opt
+}
+
+async function updateMarketNumber(){
+    let id = marketSelect.value
+    let val = document.getElementById("marketValue").value
+    await client.from("Game result").update({ number: val }).eq("id", id)
+    loadGame()
+}
+
+// HISTORY
+async function loadHistory(){
+    let { data } = await client.from("history").select("*")
+    let html=""
+    data.forEach(r=>{
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.user_id}</td>
+        <td>${r.market}</td>
+        <td>${r.data}</td>
+        <td>${r.total}</td>
+        <td>${r.created_at}</td>
+        </tr>`
+    })
+    historyData.innerHTML = html
+}
+
+// QR
+async function loadQR(){
+    let { data } = await client.from("settings").select("qr").eq("name","payment").single()
+    if(data?.qr){ qrPreview.src = data.qr }
+}
+
+async function uploadQR(){
+    let file = qrFile.files[0]
+    let fileName = "qr_"+Date.now()
+    await client.storage.from("screenshots").upload(fileName, file)
+    let { data } = client.storage.from("screenshots").getPublicUrl(fileName)
+    await client.from("settings").update({qr:data.publicUrl}).eq("name","payment")
+    loadQR()
+}
+
+async function deleteQR(){
+    await client.from("settings").update({qr:null}).eq("name","payment")
+    qrPreview.src=""
+}
+
+// LOAD
+loadUsers()
+loadGame()
+loadHistory()
+loadQR()
+</script>
+
+</body>
+</html>

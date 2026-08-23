@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdraw</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family: Arial;background:#f2f2f2;padding:15px;}
+
+#userId{position:fixed;left:15px;top:10px;background:green;color:#fff;padding:8px 15px;border-radius:20px;font-weight:bold;}
+#wallet{position:fixed;right:15px;top:10px;background:red;color:#fff;padding:8px 15px;border-radius:20px;font-weight:bold;}
+
+.card{background:#fff;padding:20px;border-radius:20px;margin-top:50px;margin-bottom:15px;}
+
+input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ccc;}
+
+.amount-text{font-size:18px;font-weight:bold;text-align:center;margin-bottom:15px;}
+
+.row{display:flex;gap:10px;margin-top:15px;}
+
+.btn{flex:1;padding:15px;border:none;border-radius:15px;color:#fff;font-weight:bold;}
+
+.back{ background:#ff4d4d; }
+.confirm{ background:#7cc84a; }
+.change{ background:orange; }
+.bank{ background:#4facfe; }
+
+.main-btn{width:100%;padding:15px;border:none;border-radius:15px;background:#ff4d4d;color:#fff;font-weight:bold;margin-top:15px;}
+
+#savedQR img{width:150px;border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div id="userId">ID: --</div>
+<div id="wallet">₹ 0</div>
+
+<div class="card" id="step1">
+<h3>Withdraw Request</h3>
+<input type="number" id="amount" placeholder="Enter Amount">
+<button class="main-btn" onclick="goStep2()">SUBMIT</button>
+</div>
+
+<div class="card" id="step2" style="display:none;">
+<div class="amount-text">
+<span id="showAmount">0</span> Rs. आपका QR नीचे दिख रहा है
+</div>
+
+<div id="savedQR"></div>
+
+<div class="row">
+<button class="btn back" onclick="goBack()">BACK</button>
+<button class="btn confirm" onclick="submitWithdraw()">CONFIRM</button>
+</div>
+
+<div class="row">
+<button class="btn change" onclick="openChangeQR()">CHANGE QR</button>
+<button class="btn bank" onclick="openBank()">BANK WITHDRAW</button>
+</div>
+</div>
+
+<div class="card" id="changeQR" style="display:none;">
+<input type="file" id="newqr" onchange="previewNewQR()">
+<div id="newPreview"></div>
+<button class="main-btn" onclick="saveQR()">SAVE QR</button>
+</div>
+
+<div class="card" id="bankForm" style="display:none;">
+<input type="text" id="name" placeholder="Account Holder Name">
+<input type="text" id="acc1" placeholder="Account Number">
+<input type="text" id="acc2" placeholder="Re-enter Account Number">
+<input type="text" id="ifsc" placeholder="IFSC Code">
+<button class="main-btn" onclick="submitBank()">SUBMIT</button>
+</div>
+
+<script>
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+const user = JSON.parse(localStorage.getItem("user"))
+
+async function loadUser(){
+    const { data } = await client.from("login").select("balance").eq("id", user.id).single()
+    wallet.innerText="₹ "+(data.balance||0)
+    userId.innerText="ID: "+user.id
+}
+loadUser()
+
+function loadQR(){
+    let qr = localStorage.getItem("user_qr")
+    savedQR.innerHTML = qr ? `<img src="${qr}">` : "No QR saved"
+}
+loadQR()
+
+function openChangeQR(){
+    changeQR.style.display="block"
+}
+
+function goStep2(){
+    let amt=amount.value
+    if(!amt) return alert("Amount daal")
+    localStorage.setItem("withdraw_amount",amt)
+    showAmount.innerText=amt
+    step1.style.display="none"
+    step2.style.display="block"
+}
+
+function goBack(){
+    step2.style.display="none"
+    step1.style.display="block"
+}
+
+function previewNewQR(){
+    let file=newqr.files[0]
+    let reader=new FileReader()
+    reader.onload=e=>{
+        newPreview.innerHTML=`<img src="${e.target.result}" width="150">`
+    }
+    reader.readAsDataURL(file)
+}
+
+async function saveQR(){
+    let file=newqr.files[0]
+    if(!file) return alert("QR upload kar")
+
+    let fileName="qr_"+Date.now()+file.name
+    await client.storage.from("screenshots").upload(fileName,file)
+
+    let { data }=client.storage.from("screenshots").getPublicUrl(fileName)
+
+    localStorage.setItem("user_qr",data.publicUrl)
+
+    loadQR() // 🔥 instant show
+    changeQR.style.display="none"
+
+    alert("QR Saved ✅")
+}
+
+async function submitWithdraw(){
+
+    let amount=parseInt(localStorage.getItem("withdraw_amount"))
+    let qr=localStorage.getItem("user_qr")
+
+    if(!qr) return alert("QR save kar")
+
+    let { data }=await client.from("login").select("balance").eq("id",user.id).single()
+
+    if(data.balance < amount){
+        alert("Balance kam hai ❌")
+        return
+    }
+
+    let newBalance=data.balance - amount
+
+    await client.from("login").update({balance:newBalance}).eq("id",user.id)
+
+    await client.from("withdraw_requests").insert({
+        user_id:user.id,
+        mobile:user.mobile,
+        amount:amount,
+        upi:qr,
+        status:"pending"
+    })
+
+    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
+    location.reload()
+}
+
+function openBank(){
+    bankForm.style.display="block"
+}
+
+async function submitBank(){
+
+    let name=nameInput.value
+    let acc1=acc1Input.value
+    let acc2=acc2Input.value
+    let ifsc=ifscInput.value
+    let amount=parseInt(localStorage.getItem("withdraw_amount"))
+
+    if(acc1!==acc2) return alert("Account match nahi")
+
+    let { data }=await client.from("login").select("balance").eq("id",user.id).single()
+
+    if(data.balance < amount){
+        alert("Balance kam hai ❌")
+        return
+    }
+
+    let newBalance=data.balance - amount
+
+    await client.from("login").update({balance:newBalance}).eq("id",user.id)
+
+    await client.from("withdraw_requests").insert({
+        user_id:user.id,
+        mobile:user.mobile,
+        amount:amount,
+        upi:name+" | "+acc1+" | "+ifsc,
+        status:"pending"
+    })
+
+    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
+    location.reload()
+}
+</script>
+
+</body>
+</html>

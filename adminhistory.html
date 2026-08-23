@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin History</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{background:#f2f2f2;font-family:Arial;margin:0;}
+
+.header{background:#fff;padding:15px;text-align:center;font-weight:bold;}
+
+.filters{
+display:flex;
+gap:10px;
+padding:10px;
+}
+
+select{
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+.card{background:#fff;margin:10px;padding:15px;border-radius:12px;}
+.row{display:flex;justify-content:space-between;}
+.market{color:red;font-weight:bold;}
+.date{font-size:12px;color:#666;margin-top:5px;}
+.amount{background:red;color:#fff;padding:5px 10px;border-radius:6px;}
+</style>
+</head>
+
+<body>
+
+<div class="header">Admin History</div>
+
+<!-- FILTERS -->
+<div class="filters">
+<select id="dateFilter" onchange="filterData()">
+<option value="">All Date</option>
+<option value="today">Today</option>
+<option value="yesterday">Yesterday</option>
+</select>
+
+<select id="marketFilter" onchange="filterData()">
+<option value="">All Market</option>
+</select>
+
+<select id="amountFilter" onchange="filterData()">
+<option value="">All Amount</option>
+<option value="100">100+</option>
+<option value="500">500+</option>
+<option value="1000">1000+</option>
+</select>
+</div>
+
+<div id="history"></div>
+
+<script>
+
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+let fullData = [];
+
+// LOAD
+async function loadHistory(){
+
+let {data,error} = await client
+.from("history")
+.select("*")
+.order("id",{ascending:false});
+
+if(error){ console.log(error); return; }
+
+fullData = data;
+
+// AUTO MARKET
+let markets = [...new Set(data.map(d => d.market))];
+let html = `<option value="">All Market</option>`;
+
+markets.forEach(m=>{
+if(m) html += `<option value="${m}">${m}</option>`;
+});
+
+document.getElementById("marketFilter").innerHTML = html;
+
+renderData(fullData);
+}
+
+// RENDER
+function renderData(data){
+
+let html="";
+
+data.forEach(item=>{
+
+let numbers=[];
+
+try{
+if(!item.data) return;
+
+let parsed = typeof item.data==="string" ? JSON.parse(item.data) : item.data;
+if(!Array.isArray(parsed)) parsed=[parsed];
+
+parsed.forEach(p=>{
+
+if(!p) return;
+
+let num="";
+let number = p.number ?? p.num ?? null;
+let amount = p.amount ?? p.a ?? p.value ?? 0;
+
+if(number==="TYPING") return;
+
+if(p.type==="A") num = number+"×";
+else if(p.type==="B") num = "×"+number;
+else if(number!==null) num = String(number).padStart(2,'0');
+
+if(num!==""){
+numbers.push({
+number:num,
+amount:Number(amount)||0
+});
+}
+
+});
+
+}catch(e){ return; }
+
+// 🔥 HAR ENTRY PRINT
+numbers.forEach(n=>{
+
+html+=`
+<div class="card">
+
+<div class="row">
+<div class="market">${item.market}</div>
+<div class="amount">₹ ${n.amount}</div>
+</div>
+
+<div>User: ${item.user_id} | Bet No: ${n.number}</div>
+
+<div class="date">
+${new Date(item.created_at).toLocaleString()}
+</div>
+
+</div>
+`;
+
+});
+
+});
+
+document.getElementById("history").innerHTML = html || "No Data Found";
+}
+
+// FILTER
+function filterData(){
+
+let dateVal = document.getElementById("dateFilter").value;
+let marketVal = document.getElementById("marketFilter").value;
+let amtVal = document.getElementById("amountFilter").value;
+
+let filtered = fullData.filter(item=>{
+
+let match = true;
+
+// MARKET
+if(marketVal && item.market !== marketVal){
+match = false;
+}
+
+// DATE
+if(dateVal){
+let itemDate = new Date(item.created_at);
+let today = new Date();
+
+if(dateVal==="today"){
+if(itemDate.toDateString() !== today.toDateString()){
+match = false;
+}
+}
+
+if(dateVal==="yesterday"){
+let y = new Date();
+y.setDate(today.getDate()-1);
+if(itemDate.toDateString() !== y.toDateString()){
+match = false;
+}
+}
+}
+
+// AMOUNT
+if(amtVal){
+let totalAmt = 0;
+
+try{
+let parsed = typeof item.data==="string" ? JSON.parse(item.data) : item.data;
+if(!Array.isArray(parsed)) parsed=[parsed];
+
+parsed.forEach(p=>{
+totalAmt += Number(p.amount ?? p.a ?? p.value ?? 0);
+});
+}catch{}
+
+if(totalAmt < Number(amtVal)){
+match = false;
+}
+}
+
+return match;
+
+});
+
+renderData(filtered);
+}
+
+loadHistory();
+
+</script>
+
+</body>
+</html>

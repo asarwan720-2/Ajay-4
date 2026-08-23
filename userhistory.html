@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My History</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+    background:#f2f2f2;
+    font-family:Arial;
+    margin:0;
+}
+
+.header{
+  background:#fff;
+  padding:15px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.card{
+    background:#fff;
+    margin:10px;
+    padding:15px;
+    border-radius:12px;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+}
+
+.market{
+    color:red;
+    font-weight:bold;
+}
+
+.date{
+    font-size:12px;
+    color:#666;
+}
+
+.bet{
+    margin-top:5px;
+}
+
+.amount{
+    background:red;
+    color:#fff;
+    padding:5px 10px;
+    border-radius:6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">My History</div>
+<div id="history"></div>
+
+<script>
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+    alert("Login first");
+    window.location.href = "index.html";
+}
+
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+async function loadHistory(){
+
+    let { data, error } = await client
+        .from("history")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("id", { ascending: false });
+
+    if(error){
+        console.log(error);
+        return;
+    }
+
+    let html = "";
+
+    data.forEach(item=>{
+
+        if(!item.data) return;
+
+        let arr;
+
+        try{
+            arr = JSON.parse(item.data);
+        }catch{
+            return;
+        }
+
+        if(!Array.isArray(arr)) return;
+
+ let parts = item.created_at.split("T");
+
+let d = parts[0].split("-");
+let date = `${d[2]}/${d[1]}/${d[0]}`;
+
+let time = parts[1].split(".")[0];
+
+        arr.forEach(n => {
+
+            let num = "";
+            let amount = 0;
+
+            // ❌ ignore typing
+            if(n.number === "TYPING") return;
+
+            // ✅ ANDAR (× logic)
+            if(n.type === "A" && n.number != null){
+                num = n.number + "×";
+                amount = n.amount || 0;
+            }
+
+            // ✅ BAHAR (× logic)
+            else if(n.type === "B" && n.number != null){
+                num = "×" + n.number;
+                amount = n.amount || 0;
+            }
+
+            // ✅ NORMAL
+            else if(n.number && n.amount){
+                num = String(n.number).padStart(2,'0');
+                amount = n.amount;
+            }
+
+            // ✅ COPY PASTE
+            else if(n.num && n.a){
+                num = String(n.num).padStart(2,'0');
+                amount = n.a;
+            }
+
+            // ❌ बाकी ignore
+            else{
+                return;
+            }
+
+            html += `
+            <div class="card">
+                <div class="row">
+                    <div class="market">${item.market}</div>
+                    <div class="date">${date}</div>
+                </div>
+
+                <div class="row bet">
+                    <div>Bet No: ${num}</div>
+                    <div class="amount">₹ ${amount}</div>
+                </div>
+            </div>
+            `;
+        });
+
+    });
+
+    document.getElementById("history").innerHTML = html || "No Data Found";
+}
+
+loadHistory();
+
+</script>
+
+</body>
+</html>

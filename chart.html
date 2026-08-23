@@ -1,0 +1,96 @@
+<!-- chart.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result Chart</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#f2f2f2;
+}
+
+.top{
+  background:#0057d8;
+  color:white;
+  padding:12px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+th{
+  background:#ffcc00;
+  padding:10px;
+  border:1px solid #ccc;
+}
+
+td{
+  border:1px solid #ddd;
+  text-align:center;
+  padding:10px;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+Monthly Result Chart
+</div>
+
+<table>
+<tr>
+<th>DATE</th>
+<th>DSWR</th>
+<th>FRBD</th>
+<th>GZBD</th>
+<th>GALI</th>
+</tr>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+<script>
+
+let body=document.getElementById("tableBody");
+
+let data = JSON.parse(localStorage.getItem("chartData")) || [];
+
+for(let i=1;i<=31;i++){
+
+let item = data.find(x=>x.date==i) || {};
+
+body.innerHTML += `
+<tr>
+
+<td>${i}</td>
+
+<td>${item.dswr || "--"}</td>
+
+<td>${item.frbd || "--"}</td>
+
+<td>${item.gzbd || "--"}</td>
+
+<td>${item.gali || "--"}</td>
+
+</tr>
+`;
+
+}
+
+</script>
+
+</body>
+</html>

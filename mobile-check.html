@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mobile Check</title>
+<style>
+body{
+  font-family:Arial;
+  background:#0f172a;
+  color:#fff;
+  text-align:center;
+  padding:50px;
+}
+button{
+  padding:15px;
+  font-size:18px;
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Mobile Storage Check</h2>
+
+<div id="result">Checking...</div>
+
+<button onclick="saveTest()">Save Test Mobile</button>
+
+<script>
+
+// check mobile
+let mobile = localStorage.getItem("mobile");
+
+if(mobile){
+  document.getElementById("result").innerText = "✅ Saved Mobile: " + mobile;
+}else{
+  document.getElementById("result").innerText = "❌ No Mobile Found";
+}
+
+// test save button
+function saveTest(){
+  localStorage.setItem("mobile", "9999999999");
+  alert("Test Mobile Saved");
+  location.reload();
+}
+
+</script>
+
+</body>
+</html>

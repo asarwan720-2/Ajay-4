@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Result</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family:Arial;background:#f2f2f2;margin:0;}
+.header{background:red;color:#fff;text-align:center;padding:15px;}
+.row{background:#fff;margin:10px;padding:10px;border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div class="header" id="title">Result</div>
+<div id="list">Loading...</div>
+
+<script>
+
+// ✅ SUPABASE
+const client = window.supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+// ✅ DATE FIX FUNCTION (ONLY ADD)
+function getCustomDate(){
+ let now = new Date()
+ let hours = now.getHours()
+
+ if(hours < 6){
+   now.setDate(now.getDate() - 1)
+ }
+
+ let year = now.getFullYear()
+ let month = String(now.getMonth()+1).padStart(2,'0')
+ let day = String(now.getDate()).padStart(2,'0')
+
+ return `${year}-${month}-${day}`
+}
+
+// ✅ URL se market lo
+const params = new URLSearchParams(window.location.search);
+const market = params.get("market");
+
+// ❗ agar market nahi mila
+if(!market){
+ document.getElementById("list").innerHTML = "Market not found";
+ throw new Error("Market missing");
+}
+
+// title set
+document.getElementById("title").innerText = market + " Result";
+
+// ✅ MAIN FUNCTION
+async function loadData(){
+
+ let {data,error} = await client
+   .from("Game result")
+   .select("*")
+   .eq("name", market)
+   .single();
+
+ if(error || !data){
+   console.log(error);
+   document.getElementById("list").innerHTML="No Data Found";
+   return;
+ }
+
+ let result = data.number || "-";
+
+ // ❌ OLD
+ // let today = new Date().toISOString().split("T")[0];
+
+ // ✅ NEW (FIXED)
+ let today = getCustomDate();
+
+ let key = "history_" + market;
+
+ let history = JSON.parse(localStorage.getItem(key)) || [];
+
+ let index = history.findIndex(h => h.date === today);
+
+ if(index !== -1){
+   history[index].result = result;
+ }else{
+   history.push({date: today, result: result});
+ }
+
+ history = history.slice(-30);
+
+ localStorage.setItem(key, JSON.stringify(history));
+
+ let html = "";
+
+ history.reverse().forEach(h=>{
+   html += `
+   <div class="row">
+     ${h.date} - <b>${h.result}</b>
+   </div>`;
+ });
+
+ document.getElementById("list").innerHTML = html;
+}
+
+// run
+loadData();
+
+</script>
+
+</body>
+</html>

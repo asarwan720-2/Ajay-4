@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;padding:15px;background:#f2f2f2;}
+input{width:100%;padding:10px;margin-top:10px;border-radius:8px;border:1px solid #ccc;}
+button{padding:8px 12px;margin-top:5px;border:none;border-radius:6px;color:#fff;cursor:pointer;}
+.save{background:green;}
+.delete{background:red;}
+.card{background:#fff;padding:15px;border-radius:10px;margin-top:10px;}
+.row{border-bottom:1px solid #ddd;padding:8px;}
+</style>
+</head>
+
+<body>
+
+<h3>Add Result</h3>
+
+<input id="market" placeholder="Market Name (DISAWAR)">
+<input id="number" placeholder="Result (00-99)">
+<input type="date" id="date">
+
+<button class="save" onclick="save()">SAVE</button>
+
+<hr>
+
+<h3>All Records</h3>
+<div id="list"></div>
+
+<script>
+function save(){
+
+  let market = document.getElementById("market").value.trim()
+  let number = document.getElementById("number").value.trim()
+  let date = document.getElementById("date").value
+
+  if(!market || !number) return alert("Fill all")
+
+  if(!date){
+    date = new Date().toISOString().split("T")[0]
+  }
+
+  let data = JSON.parse(localStorage.getItem("results")) || {}
+
+  if(!data[market]) data[market] = []
+
+  data[market].unshift({number, date})
+
+  localStorage.setItem("results", JSON.stringify(data))
+
+  loadData()
+
+  document.getElementById("market").value=""
+  document.getElementById("number").value=""
+  document.getElementById("date").value=""
+}
+
+function loadData(){
+
+  let data = JSON.parse(localStorage.getItem("results")) || {}
+  let list = document.getElementById("list")
+  list.innerHTML=""
+
+  Object.keys(data).forEach(market=>{
+
+    let box = document.createElement("div")
+    box.className="card"
+
+    let title = document.createElement("h3")
+    title.innerText = market
+    box.appendChild(title)
+
+    data[market].forEach((item,index)=>{
+
+      let row = document.createElement("div")
+      row.className="row"
+
+      row.innerHTML = `
+        <input type="date" value="${item.date}" onchange="changeDate('${market}',${index},this.value)">
+        <div>Result: <b>${item.number}</b></div>
+        <button class="delete" onclick="del('${market}',${index})">DELETE</button>
+      `
+
+      box.appendChild(row)
+    })
+
+    list.appendChild(box)
+  })
+}
+
+function del(market,index){
+  let data = JSON.parse(localStorage.getItem("results")) || {}
+  data[market].splice(index,1)
+  localStorage.setItem("results", JSON.stringify(data))
+  loadData()
+}
+
+function changeDate(market,index,newDate){
+  let data = JSON.parse(localStorage.getItem("results")) || {}
+  data[market][index].date = newDate
+  localStorage.setItem("results", JSON.stringify(data))
+}
+
+loadData()
+</script>
+
+</body>
+</html>

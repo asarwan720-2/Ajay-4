@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Result</title>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+
+.frame {
+    width: 100%;
+    height: 350px;
+    overflow: auto;
+    background: #fff;
+    border-radius: 10px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 700px;
+}
+
+td, th {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    border: none;
+    text-align: center;
+    background: transparent;
+}
+
+.update-box{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Game Result</h2>
+
+<div class="update-box">
+    <select id="marketSelect"></select>
+    <input type="text" id="marketValue" placeholder="Enter number">
+    <button onclick="updateMarket()">Update</button>
+</div>
+
+<div class="frame">
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>name</th>
+<th>number</th>
+<th>open</th>
+<th>close</th>
+</tr>
+</thead>
+
+<tbody id="gameData"></tbody>
+
+</table>
+</div>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"
+
+const supabase = createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+// LOAD GAME DATA
+async function loadGames(){
+    const { data, error } = await supabase.from("Game result").select("*")
+
+    if(error){
+        console.log("Load error:", error)
+        alert("Table load error")
+        return
+    }
+
+    let html = ""
+    let opt = ""
+
+    data.forEach(row => {
+        html += `
+        <tr>
+            <td>${row.id}</td>
+
+            <td>
+            <input value="${row.name || ""}"
+            onchange="updateGame('${row.id}','name',this.value)">
+            </td>
+
+            <td>
+            <input value="${row.number || ""}"
+            onchange="updateGame('${row.id}','number',this.value)">
+            </td>
+
+            <td>
+            <input value="${row.open || ""}"
+            onchange="updateGame('${row.id}','open',this.value)">
+            </td>
+
+            <td>
+            <input value="${row.close || ""}"
+            onchange="updateGame('${row.id}','close',this.value)">
+            </td>
+
+        </tr>`
+
+        opt += `<option value="${row.id}">${row.name}</option>`
+    })
+
+    document.getElementById("gameData").innerHTML = html
+    document.getElementById("marketSelect").innerHTML = opt
+}
+
+// INLINE UPDATE
+window.updateGame = async (id, col, val) => {
+
+    const { error } = await supabase
+        .from("Game result")
+        .update({ [col]: val })
+        .eq("id", id)
+
+    if(error){
+        console.log("Update error:", error.message)
+        alert(error.message)
+    }
+}
+
+// BUTTON UPDATE
+window.updateMarket = async () => {
+
+    let id = document.getElementById("marketSelect").value
+    let input = document.getElementById("marketValue")
+    let val = input.value
+
+    if(!val) return alert("Number daal")
+
+    const { error } = await supabase
+        .from("Game result")
+        .update({ number: val })
+        .eq("id", id)
+
+    if(error){
+        console.log("Update error:", error.message)
+        alert(error.message)   // 👈 अब exact error दिखेगा
+        return
+    }
+
+    input.value = ""
+    alert("Updated ✅")
+    loadGames()
+}
+
+// LOAD
+loadGames()
+
+</script>
+
+</body>
+</html>

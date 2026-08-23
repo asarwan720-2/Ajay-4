@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f2f2f2;
+  text-align:center;
+  margin:0;
+}
+
+.header{
+  background:black;
+  color:#fff;
+  padding:15px;
+  font-size:20px;
+}
+
+.btn{
+  width:85%;
+  padding:15px;
+  margin:10px auto;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  color:#fff;
+  display:block;
+}
+
+.deposit{background:#3498db;}
+.admin{background:#e74c3c;}
+.history{background:#9b59b6;}
+.winning{background:#27ae60;}
+.table{background:#f39c12;}
+.withdraw{background:#2c3e50;}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">Admin Panel</div>
+
+<button class="btn deposit" onclick="go('Depositwithdraw.html')">Deposit / Withdraw</button>
+
+<button class="btn admin" onclick="go('admin.html')">Admin</button>
+
+<button class="btn history" onclick="go('adminhistory.html')">Admin History</button>
+
+<button class="btn winning" onclick="go('adminwining.html')">Admin Winning</button>
+
+<button class="btn table" onclick="go('table.html')">Table</button>
+
+<button class="btn withdraw" onclick="go('withdraw.html')">Withdraw</button>
+
+<script>
+function go(page){
+  window.location.href = page;
+}
+</script>
+
+</body>
+</html>

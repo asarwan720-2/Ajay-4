@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f2f2f2;
+    margin:0;
+    padding:10px;
+}
+
+/* TOP BAR */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.idbox{
+    background:green;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:20px;
+}
+
+.walletbox{
+    background:red;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:20px;
+}
+
+/* CARD */
+.card{
+    background:#fff;
+    border-radius:15px;
+    padding:20px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.balance{
+    font-size:30px;
+    font-weight:bold;
+}
+
+/* BUTTONS */
+.btns{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+.btn{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    color:#fff;
+    font-size:16px;
+}
+
+.deposit{background:green;}
+.withdraw{background:red;}
+
+/* TABLE */
+.table-box{
+    background:#fff;
+    border-radius:15px;
+    padding:10px;
+    margin-bottom:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:red;
+    color:#fff;
+    padding:10px;
+}
+
+td{
+    padding:8px;
+    text-align:center;
+    border-bottom:1px solid #ccc;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div class="idbox" id="userId">ID: --</div>
+    <div class="walletbox" id="balance">₹ 0</div>
+</div>
+
+<div class="card">
+    <div class="balance" id="mainBalance">₹ 0</div>
+    <div>Available Balance</div>
+
+    <div class="btns">
+        <button class="btn deposit" onclick="goDeposit()">ADD +</button>
+        <button class="btn withdraw" onclick="goWithdraw()">WID -</button>
+    </div>
+</div>
+
+<!-- DEPOSIT HISTORY -->
+<div class="table-box">
+<h3>Deposit History</h3>
+<table>
+<tr><th>ID</th><th>Amount</th><th>Status</th></tr>
+<tbody id="depositHistory"></tbody>
+</table>
+</div>
+
+<!-- WITHDRAW HISTORY -->
+<div class="table-box">
+<h3>Withdraw History</h3>
+<table>
+<tr><th>ID</th><th>Amount</th><th>Status</th></tr>
+<tbody id="withdrawHistory"></tbody>
+</table>
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+// ✅ USER LOAD
+let user = JSON.parse(localStorage.getItem("user"));
+
+async function loadUser(){
+    let { data } = await client
+    .from("login")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+    document.getElementById("userId").innerText = "ID: " + data.id;
+    document.getElementById("balance").innerText = "₹ " + data.balance;
+    document.getElementById("mainBalance").innerText = "₹ " + data.balance;
+}
+
+// ✅ DEPOSIT HISTORY
+async function loadDeposit(){
+    let { data } = await client
+    .from("deposit_requests")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id",{ascending:false});
+
+    let html="";
+    data.forEach(r=>{
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.amount}</td>
+        <td>${r.status}</td>
+        </tr>`;
+    });
+
+    depositHistory.innerHTML = html;
+}
+
+// ✅ WITHDRAW HISTORY
+async function loadWithdraw(){
+    let { data } = await client
+    .from("withdraw_requests")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("id",{ascending:false});
+
+    let html="";
+    data.forEach(r=>{
+        html+=`<tr>
+        <td>${r.id}</td>
+        <td>${r.amount}</td>
+        <td>${r.status}</td>
+        </tr>`;
+    });
+
+    withdrawHistory.innerHTML = html;
+}
+
+// ✅ BUTTON LINKS
+function goDeposit(){
+    window.location.href = "Depositwithdrow.html#deposit";
+}
+
+function goWithdraw(){
+    window.location.href = "Depositwithdrow.html#withdraw";
+}
+
+// LOAD
+loadUser();
+loadDeposit();
+loadWithdraw();
+
+</script>
+
+</body>
+      </html>

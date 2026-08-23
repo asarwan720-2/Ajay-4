@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f2f2f2;}
+
+#userId{
+  position:fixed;left:15px;top:15px;
+  background:green;color:#fff;
+  padding:8px 18px;border-radius:20px;
+}
+
+#wallet{
+  position:fixed;right:15px;top:15px;
+  background:red;color:#fff;
+  padding:8px 18px;border-radius:20px;
+}
+
+.card{
+  margin-top:80px;
+  background:#fff;
+  padding:20px;
+  border-radius:20px;
+  margin:80px 15px 15px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+button{
+  width:100%;
+  padding:15px;
+  margin-top:15px;
+  border:none;
+  border-radius:15px;
+  background:#4facfe;
+  color:#fff;
+  font-weight:bold;
+}
+
+img{width:100%;margin-top:10px;border-radius:10px;}
+</style>
+</head>
+
+<body>
+
+<div id="userId">ID: 0</div>
+<div id="wallet">₹ 0</div>
+
+<div class="card">
+<h3>My Profile</h3>
+
+<!-- FIX DATA -->
+<input type="text" id="name" disabled>
+<input type="text" id="mobile" disabled>
+
+<hr>
+
+<!-- EDITABLE -->
+<input type="text" id="upi_id" placeholder="Enter UPI ID">
+<input type="text" id="upi_number" placeholder="Enter UPI Number">
+<input type="text" id="bank" placeholder="Bank Details">
+
+<input type="file" id="qrFile" onchange="previewQR()">
+<div id="qrPreview"></div>
+
+<button onclick="saveProfile()">SAVE</button>
+</div>
+
+<script>
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+const user = JSON.parse(localStorage.getItem("user"))
+
+if(!user){
+  window.location.href="index.html"
+}
+
+// LOAD
+async function loadProfile(){
+  let { data } = await client
+  .from("login")
+  .select("*")
+  .eq("id", user.id)
+  .single()
+
+  if(data){
+    name.value = data.name
+    mobile.value = data.mobile
+    wallet.innerText = "₹ " + data.balance
+    userId.innerText = "ID: " + data.id
+
+    upi_id.value = data.upi_id || ""
+    upi_number.value = data.upi_number || ""
+    bank.value = data.bank || ""
+
+    if(data.qr){
+      qrPreview.innerHTML = `<img src="${data.qr}">`
+    }
+  }
+}
+
+// PREVIEW
+function previewQR(){
+  let file = qrFile.files[0]
+  let reader = new FileReader()
+  reader.onload = e=>{
+    qrPreview.innerHTML = `<img src="${e.target.result}">`
+  }
+  reader.readAsDataURL(file)
+}
+
+// SAVE
+async function saveProfile(){
+
+  let qrUrl = null
+  let file = qrFile.files[0]
+
+  if(file){
+    let fileName = "qr_"+Date.now()+file.name
+
+    await client.storage.from("screenshots").upload(fileName, file)
+
+    let { data } = client.storage.from("screenshots").getPublicUrl(fileName)
+
+    qrUrl = data.publicUrl
+  }
+
+  let updateData = {
+    upi_id: upi_id.value,
+    upi_number: upi_number.value,
+    bank: bank.value
+  }
+
+  if(qrUrl){
+    updateData.qr = qrUrl
+  }
+
+  let { error } = await client
+  .from("login")
+  .update(updateData)
+  .eq("id", user.id)
+
+  if(error){
+    alert("Error")
+  }else{
+    alert("Saved ✅")
+    loadProfile()
+  }
+}
+
+loadProfile()
+</script>
+
+</body>
+</html>

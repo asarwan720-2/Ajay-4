@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposit</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f2f2f2;
+    padding:15px;
+}
+
+/* TOP BAR */
+#userId{
+  position:fixed;
+  left:15px;
+  top:10px;
+  background:green;
+  color:white;
+  padding:8px 15px;
+  border-radius:20px;
+  font-weight:bold;
+  z-index:999;
+}
+#wallet{
+  position:fixed;
+  right:15px;
+  top:10px;
+  background:red;
+  color:white;
+  padding:8px 15px;
+  border-radius:20px;
+  font-weight:bold;
+  z-index:999;
+}
+
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:20px;
+    margin-top:60px;
+    margin-bottom:20px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.amount-btns{
+    display:flex;
+    gap:10px;
+}
+.amount-btns button{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    background:linear-gradient(45deg,#4facfe,#ff004c);
+    color:#fff;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+}
+
+.main-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    background:#7cc84a;
+    color:#fff;
+    font-weight:bold;
+    margin-top:15px;
+}
+
+.amount-text{
+    font-size:18px;
+    font-weight:bold;
+    text-align:center;
+    margin-bottom:15px;
+}
+.amount-text span{
+    color:green;
+}
+
+/* QR */
+.qr-box{
+    background:#f1f1f1;
+    padding:15px;
+    border-radius:15px;
+    margin-top:15px;
+    text-align:center;
+}
+.qr-inner{
+    width:100%;
+    max-width:260px;
+    margin:auto;
+    background:#fff;
+    padding:10px;
+    border-radius:12px;
+}
+.qr-inner img{
+    width:100%;
+    height:auto;
+    border-radius:10px;
+}
+
+/* Upload */
+.upload-box{
+    background:#f2f2f2;
+    padding:20px;
+    border-radius:20px;
+    text-align:center;
+}
+
+.upload-btn{
+    background:linear-gradient(45deg,#4facfe,#ff004c);
+    color:#fff;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    font-weight:bold;
+    width:100%;
+}
+
+.preview{
+    margin-top:15px;
+}
+.preview img{
+    width:150px;   /* 🔥 FIXED SIZE */
+    height:auto;
+    border-radius:10px;
+}
+
+.row{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+.back-btn{
+    flex:1;
+    background:#ff4d4d;
+    color:#fff;
+    border:none;
+    padding:15px;
+    border-radius:15px;
+    font-weight:bold;
+}
+.confirm-btn{
+    flex:1;
+    background:#7cc84a;
+    color:#fff;
+    border:none;
+    padding:15px;
+    border-radius:15px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="userId">ID: 0</div>
+<div id="wallet">₹ 0</div>
+
+<div class="card" id="step1">
+<div class="amount-btns">
+<button onclick="setAmount(100)">100</button>
+<button onclick="setAmount(200)">200</button>
+<button onclick="setAmount(500)">500</button>
+<button onclick="setAmount(1000)">1000</button>
+</div>
+
+<input type="number" id="amount" placeholder="Enter Amount">
+<button class="main-btn" onclick="goStep2()">SUBMIT</button>
+</div>
+
+<div class="card" id="step2" style="display:none;">
+<div class="amount-text">
+<span id="showAmount">0</span> Rs. screenshot upload karo
+</div>
+
+<div class="qr-box">
+<h3>Scan & Pay</h3>
+<div class="qr-inner">
+<img id="qrImage" src="">
+</div>
+</div>
+
+<div class="upload-box">
+<input type="file" id="file" onchange="previewImage()" style="display:none;">
+<button class="upload-btn" onclick="document.getElementById('file').click()">
+UPLOAD PAYMENT SCREENSHOT
+</button>
+
+<div class="preview" id="preview"></div>
+
+<div class="row">
+<button class="back-btn" onclick="goBack()">BACK</button>
+<button class="confirm-btn" onclick="submitDeposit()">CONFIRM</button>
+</div>
+</div>
+</div>
+
+<script>
+const { createClient } = supabase
+
+const client = createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+const user = JSON.parse(localStorage.getItem("user"))
+
+async function loadQR(){
+    const { data } = await client.from("settings").select("*").limit(1).single()
+    if(data && data.qr){
+        qrImage.src = data.qr
+    }
+}
+loadQR()
+
+async function loadWallet(){
+    if(!user) return
+    const { data } = await client.from("login").select("balance").eq("id", user.id).single()
+    if(data){
+        wallet.innerText = "₹ " + data.balance
+        userId.innerText = "ID: " + user.id
+    }
+}
+loadWallet()
+
+function setAmount(val){ amount.value = val }
+
+function goStep2(){
+    let amt = amount.value
+    if(!amt) return alert("Amount daal")
+    localStorage.setItem("deposit_amount", amt)
+    showAmount.innerText = amt
+    step1.style.display="none"
+    step2.style.display="block"
+}
+
+function goBack(){
+    step2.style.display="none"
+    step1.style.display="block"
+}
+
+function previewImage(){
+    let file = document.getElementById("file").files[0]
+    if(file){
+        let reader = new FileReader()
+        reader.onload = e=>{
+            preview.innerHTML = `<img src="${e.target.result}">`
+        }
+        reader.readAsDataURL(file)
+    }
+}
+
+async function submitDeposit(){
+
+    if(!user){
+        alert("Login first ❌")
+        return
+    }
+
+    let amountVal = localStorage.getItem("deposit_amount")
+    let file = document.getElementById("file").files[0]
+
+    if(!file){
+        alert("Screenshot upload kar ❌")
+        return
+    }
+
+    let fileName = Date.now()+"_"+file.name
+
+    let { error: uploadError } = await client.storage.from("screenshots").upload(fileName, file)
+
+    if(uploadError){
+        alert("Upload Error ❌")
+        return
+    }
+
+    let { data } = client.storage.from("screenshots").getPublicUrl(fileName)
+
+    let { data: userData } = await client
+        .from("login")
+        .select("mobile")
+        .eq("id", user.id)
+        .single()
+
+    let { error } = await client.from("deposit_requests").insert([{
+        user_id: user.id,
+        mobile: userData.mobile,
+        amount: Number(amountVal),
+        screenshot: data.publicUrl,
+        status: "pending"
+    }])
+
+    if(error){
+        alert("Insert Error ❌")
+        return
+    }
+
+    alert("Request Sent ✅")
+    location.reload()
+}
+</script>
+
+</body>
+</html>

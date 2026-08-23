@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family:Arial;background:#f2f2f2;padding:10px;}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    margin-bottom:20px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+img{
+    width:70px;
+    height:70px;
+    object-fit:cover;
+    border-radius:5px;
+}
+
+button{
+    padding:5px 10px;
+    border:none;
+    border-radius:5px;
+    color:#fff;
+}
+
+.approve{background:green;}
+.cancel{background:red;}
+.done{color:green;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<!-- 🔥 DEPOSIT WRAP -->
+<div id="deposit">
+
+<h3>Deposit</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th><th>User</th><th>Name</th><th>Mobile</th><th>Amount</th><th>Screenshot</th><th>Status</th><th>Action</th>
+</tr>
+</thead>
+<tbody id="depositData"></tbody>
+</table>
+
+</div>
+
+<!-- 🔥 WITHDRAW WRAP -->
+<div id="withdraw">
+
+<h3>Withdraw</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th><th>User</th><th>Name</th><th>Mobile</th><th>Amount</th><th>Details</th><th>Status</th><th>Action</th>
+</tr>
+</thead>
+<tbody id="withdrawData"></tbody>
+</table>
+
+</div>
+
+<script>
+
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+let audio = new Audio("https://www.soundjay.com/buttons/sounds/beep-07.mp3");
+
+let lastDepositCount = 0;
+let lastWithdrawCount = 0;
+
+async function getUserDetails(user_id){
+    let { data } = await client
+    .from("login")
+    .select("name,mobile")
+    .eq("id", user_id);
+
+    return data && data.length ? data[0] : {name:"-", mobile:"-"};
+}
+
+async function loadDeposits(){
+
+    let { data } = await client
+    .from("deposit_requests")
+    .select("*")
+    .order("id",{ascending:false});
+
+    let html="";
+
+    for (let r of data){
+
+        let userInfo = await getUserDetails(r.user_id);
+
+        let action = "";
+
+        if(r.status === "approved"){
+            action = `<span class="done">✔ Approved</span>`;
+        }else if(r.status === "cancelled"){
+            action = `<span style="color:red;">❌ Cancelled</span>`;
+        }else{
+            action = `
+            <button class="approve" onclick="approveDeposit(${r.id},${r.user_id},${r.amount})">Approve</button>
+            <button class="cancel" onclick="cancelDeposit(${r.id})">Cancel</button>
+            `;
+        }
+
+        let screenshot = "-";
+        if(r.screenshot){
+            let url = r.screenshot.toString().trim();
+            if(url.includes("http")){
+                screenshot = `<img src="${url}">`;
+            }
+        }
+
+        html+=`
+        <tr>
+        <td>${r.id}</td>
+        <td>${r.user_id}</td>
+        <td>${userInfo.name}</td>
+        <td>${userInfo.mobile}</td>
+        <td>${r.amount}</td>
+        <td>${screenshot}</td>
+        <td>${r.status}</td>
+        <td>${action}</td>
+        </tr>`;
+    }
+
+    document.getElementById("depositData").innerHTML=html;
+}
+
+async function loadWithdraw(){
+
+    let { data } = await client
+    .from("withdraw_requests")
+    .select("*")
+    .order("id",{ascending:false});
+
+    let html="";
+
+    for (let r of data){
+
+        let userInfo = await getUserDetails(r.user_id);
+
+        let action = "";
+
+        if(r.status === "approved"){
+            action = `<span class="done">✔ Approved</span>`;
+        }else if(r.status === "cancelled"){
+            action = `<span style="color:red;">❌ Cancelled</span>`;
+        }else{
+            action = `
+            <button class="approve" onclick="approveWithdraw(${r.id})">Approve</button>
+            <button class="cancel" onclick="cancelWithdraw(${r.id})">Cancel</button>
+            `;
+        }
+
+        let details = "-";
+
+        if(r.screenshot){
+            let url = r.screenshot.toString().trim();
+            if(url.includes("http")){
+                details = `<img src="${url}">`;
+            }else{
+                details = url;
+            }
+        }
+        else if(r.upi){
+            details = r.upi;
+        }
+
+        html+=`
+        <tr>
+        <td>${r.id}</td>
+        <td>${r.user_id}</td>
+        <td>${userInfo.name}</td>
+        <td>${userInfo.mobile}</td>
+        <td>${r.amount}</td>
+        <td>${details}</td>
+        <td>${r.status}</td>
+        <td>${action}</td>
+        </tr>`;
+    }
+
+    document.getElementById("withdrawData").innerHTML=html;
+}
+
+async function approveDeposit(id,user_id,amount){
+
+    let { data: check } = await client
+    .from("deposit_requests")
+    .select("status")
+    .eq("id",id)
+    .single();
+
+    if(check.status === "approved"){
+        alert("Already Approved");
+        return;
+    }
+
+    await client.from("deposit_requests")
+    .update({status:"approved"})
+    .eq("id",id);
+
+    let { data } = await client
+    .from("login")
+    .select("balance")
+    .eq("id",user_id)
+    .single();
+
+    let newBalance = (data.balance || 0) + amount;
+
+    await client.from("login")
+    .update({balance:newBalance})
+    .eq("id",user_id);
+
+    audio.play();
+    alert("Deposit Approved ✅");
+
+    loadDeposits();
+}
+
+async function cancelDeposit(id){
+    await client.from("deposit_requests")
+    .update({status:"cancelled"})
+    .eq("id",id);
+
+    loadDeposits();
+}
+
+async function approveWithdraw(id){
+
+    await client.from("withdraw_requests")
+    .update({status:"approved"})
+    .eq("id",id);
+
+    audio.play();
+    alert("Withdraw Approved ✅");
+
+    loadWithdraw();
+}
+
+async function cancelWithdraw(id){
+    await client.from("withdraw_requests")
+    .update({status:"cancelled"})
+    .eq("id",id);
+
+    loadWithdraw();
+}
+
+async function checkNewRequests(){
+
+    let { data: dep } = await client.from("deposit_requests").select("id");
+    let { data: wid } = await client.from("withdraw_requests").select("id");
+
+    if(lastDepositCount === 0 && lastWithdrawCount === 0){
+        lastDepositCount = dep.length;
+        lastWithdrawCount = wid.length;
+        return;
+    }
+
+    if(dep.length > lastDepositCount){
+        audio.play();
+        alert("New Deposit 🔥");
+        loadDeposits();
+    }
+
+    if(wid.length > lastWithdrawCount){
+        audio.play();
+        alert("New Withdraw 🔥");
+        loadWithdraw();
+    }
+
+    lastDepositCount = dep.length;
+    lastWithdrawCount = wid.length;
+}
+
+setInterval(checkNewRequests, 5000);
+
+loadDeposits();
+loadWithdraw();
+
+
+// 🔥 FINAL SAFE FILTER (ONLY UI CHANGE)
+window.addEventListener("load", () => {
+
+    let hash = window.location.hash;
+
+    if(hash === "#deposit"){
+        document.getElementById("withdraw").style.display = "none";
+    }
+
+    if(hash === "#withdraw"){
+        document.getElementById("deposit").style.display = "none";
+    }
+
+});
+
+</script>
+
+</body>
+</html>

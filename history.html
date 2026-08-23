@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My History</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f2f2f2;
+    padding:15px;
+}
+
+/* TOP */
+#userId{
+  position:fixed;
+  left:15px;
+  top:15px;
+  background:green;
+  color:white;
+  padding:8px 18px;
+  border-radius:20px;
+  font-weight:bold;
+}
+
+#wallet{
+  position:fixed;
+  right:15px;
+  top:15px;
+  background:red;
+  color:white;
+  padding:8px 18px;
+  border-radius:20px;
+  font-weight:bold;
+}
+
+.filter{
+    margin-top:70px;
+    background:#fff;
+    padding:15px;
+    border-radius:15px;
+}
+
+select,input{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+}
+
+button{
+    margin-top:10px;
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#4facfe;
+    color:#fff;
+    font-weight:bold;
+}
+
+.tableBox{
+    margin-top:15px;
+    background:#fff;
+    border-radius:15px;
+    padding:10px;
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+.copyBtn{
+    background:green;
+    color:#fff;
+    border:none;
+    padding:5px 10px;
+    border-radius:5px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="userId">ID: 0</div>
+<div id="wallet">₹ 0</div>
+
+<div class="filter">
+<select id="marketFilter">
+<option value="all">All Market</option>
+</select>
+
+<input type="date" id="dateFilter">
+
+<button onclick="loadHistory()">Filter</button>
+<button onclick="copyAll()">Copy All</button>
+</div>
+
+<div class="tableBox">
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Market</th>
+<th>Data</th>
+<th>Total</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody id="historyData"></tbody>
+</table>
+</div>
+
+<script>
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+)
+
+const user = JSON.parse(localStorage.getItem("user"))
+
+if(!user){
+    window.location.href="index.html"
+}
+
+// WALLET
+async function loadWallet(){
+    let { data } = await client
+    .from("login")
+    .select("balance")
+    .eq("id", user.id)
+    .single()
+
+    document.getElementById("wallet").innerText = "₹ " + data.balance
+    document.getElementById("userId").innerText = "ID: " + user.id
+}
+
+// MARKETS
+async function loadMarkets(){
+    let { data } = await client
+    .from("Game result")
+    .select("name")
+
+    let opt = '<option value="all">All Market</option>'
+    data.forEach(r=>{
+        opt += `<option value="${r.name}">${r.name}</option>`
+    })
+
+    document.getElementById("marketFilter").innerHTML = opt
+}
+
+// HISTORY
+let currentData = []
+
+async function loadHistory(){
+
+    let market = document.getElementById("marketFilter").value
+    let date = document.getElementById("dateFilter").value
+
+    let query = client
+    .from("history")
+    .select("*")
+    .eq("user_id", user.id)
+
+    if(market !== "all"){
+        query = query.eq("market", market)
+    }
+
+    // ✅ FIXED DATE FILTER
+    if(date){
+        let start = date + "T00:00:00"
+        let end = date + "T23:59:59"
+
+        query = query
+        .gte("created_at", start)
+        .lte("created_at", end)
+    }
+
+    let { data } = await query.order("created_at",{ascending:false})
+
+    currentData = data
+
+    let html = ""
+
+    data.forEach(r=>{
+        html += `<tr>
+        <td>${r.id}</td>
+        <td>${r.market}</td>
+        <td>
+            ${r.data}
+            <br>
+            <button class="copyBtn" onclick="copyOne('${r.data}')">Copy</button>
+        </td>
+        <td>${r.total}</td>
+        <td>${r.created_at}</td>
+        </tr>`
+    })
+
+    document.getElementById("historyData").innerHTML = html
+}
+
+// COPY
+function copyOne(text){
+    navigator.clipboard.writeText(text)
+    alert("Copied")
+}
+
+function copyAll(){
+    let text = currentData.map(x=>x.data).join("\n\n")
+    navigator.clipboard.writeText(text)
+    alert("All Copied")
+}
+
+// LOAD
+loadWallet()
+loadMarkets()
+loadHistory()
+</script>
+
+</body>
+</html>

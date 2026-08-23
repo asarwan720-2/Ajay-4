@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Markets</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;background:#f2f2f2;}
+
+.box{
+  margin:15px;
+  background:#fff;
+  border-radius:10px;
+}
+
+.item{
+  padding:15px;
+  border-bottom:1px solid #ddd;
+  font-size:18px;
+  display:flex;
+  justify-content:space-between;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="marketList"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("results")) || {}
+let box = document.getElementById("marketList")
+
+Object.keys(data).forEach(market=>{
+
+  let div = document.createElement("div")
+  div.className="item"
+
+  div.innerHTML = `
+    <span>${market}</span>
+    <span>></span>
+  `
+
+  div.onclick = ()=>{
+    localStorage.setItem("market", market)
+    window.location.href = "result.html"
+  }
+
+  box.appendChild(div)
+})
+</script>
+
+</body>
+</html>

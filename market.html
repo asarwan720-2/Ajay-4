@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market List</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family:Arial;background:#f2f2f2;margin:0;}
+.header{background:#333;color:#fff;text-align:center;padding:15px;}
+.card{background:#fff;margin:10px;padding:15px;border-radius:10px;cursor:pointer;}
+</style>
+</head>
+
+<body>
+
+<div class="header">Market List</div>
+<div id="list">Loading...</div>
+
+<script>
+
+const client = window.supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+async function loadMarkets(){
+
+ let {data,error} = await client
+   .from("Game result")
+   .select("name");
+
+ if(error){
+   document.getElementById("list").innerHTML="Error";
+   return;
+ }
+
+ let html="";
+
+ data.forEach(d=>{
+   html+=`
+   <div class="card" onclick="openMarket('${d.name}')">
+     ${d.name}
+   </div>`;
+ });
+
+ document.getElementById("list").innerHTML=html;
+}
+
+// ✅ yaha page name set hai
+function openMarket(name){
+  window.location.href = "result.html?market=" + encodeURIComponent(name);
+}
+
+loadMarkets();
+
+</script>
+
+</body>
+</html>
