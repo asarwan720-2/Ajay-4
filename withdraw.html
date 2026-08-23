@@ -7,29 +7,109 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{font-family: Arial;background:#f2f2f2;padding:15px;}
+body{
+    font-family:Arial;
+    background:#f2f2f2;
+    padding:15px;
+}
 
-#userId{position:fixed;left:15px;top:10px;background:green;color:#fff;padding:8px 15px;border-radius:20px;font-weight:bold;}
-#wallet{position:fixed;right:15px;top:10px;background:red;color:#fff;padding:8px 15px;border-radius:20px;font-weight:bold;}
+#userId{
+    position:fixed;
+    left:15px;
+    top:10px;
+    background:green;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:20px;
+    font-weight:bold;
+}
 
-.card{background:#fff;padding:20px;border-radius:20px;margin-top:50px;margin-bottom:15px;}
+#wallet{
+    position:fixed;
+    right:15px;
+    top:10px;
+    background:red;
+    color:#fff;
+    padding:8px 15px;
+    border-radius:20px;
+    font-weight:bold;
+}
 
-input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #ccc;}
+.card{
+    background:#fff;
+    padding:20px;
+    border-radius:20px;
+    margin-top:50px;
+    margin-bottom:15px;
+}
 
-.amount-text{font-size:18px;font-weight:bold;text-align:center;margin-bottom:15px;}
+input{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
 
-.row{display:flex;gap:10px;margin-top:15px;}
+.amount-text{
+    font-size:18px;
+    font-weight:bold;
+    text-align:center;
+    margin-bottom:15px;
+}
 
-.btn{flex:1;padding:15px;border:none;border-radius:15px;color:#fff;font-weight:bold;}
+.row{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
 
-.back{ background:#ff4d4d; }
-.confirm{ background:#7cc84a; }
-.change{ background:orange; }
-.bank{ background:#4facfe; }
+.btn{
+    flex:1;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    color:#fff;
+    font-weight:bold;
+}
 
-.main-btn{width:100%;padding:15px;border:none;border-radius:15px;background:#ff4d4d;color:#fff;font-weight:bold;margin-top:15px;}
+.back{
+    background:#ff4d4d;
+}
 
-#savedQR img{width:150px;border-radius:10px;}
+.confirm{
+    background:#7cc84a;
+}
+
+.change{
+    background:orange;
+}
+
+.bank{
+    background:#4facfe;
+}
+
+.main-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:15px;
+    background:#ff4d4d;
+    color:#fff;
+    font-weight:bold;
+    margin-top:15px;
+}
+
+#savedQR img{
+    width:150px;
+    border-radius:10px;
+}
+
+#newPreview img{
+    margin-top:10px;
+    border-radius:10px;
+}
 </style>
 </head>
 
@@ -38,175 +118,674 @@ input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px soli
 <div id="userId">ID: --</div>
 <div id="wallet">₹ 0</div>
 
+
+<!-- STEP 1 -->
 <div class="card" id="step1">
+
 <h3>Withdraw Request</h3>
-<input type="number" id="amount" placeholder="Enter Amount">
-<button class="main-btn" onclick="goStep2()">SUBMIT</button>
+
+<input
+    type="number"
+    id="amount"
+    placeholder="Enter Amount"
+    min="100"
+>
+
+<button class="main-btn" onclick="goStep2()">
+    SUBMIT
+</button>
+
 </div>
 
+
+<!-- STEP 2 -->
 <div class="card" id="step2" style="display:none;">
+
 <div class="amount-text">
-<span id="showAmount">0</span> Rs. आपका QR नीचे दिख रहा है
+    <span id="showAmount">0</span>
+    Rs. आपका QR नीचे दिख रहा है
 </div>
 
 <div id="savedQR"></div>
 
 <div class="row">
-<button class="btn back" onclick="goBack()">BACK</button>
-<button class="btn confirm" onclick="submitWithdraw()">CONFIRM</button>
+
+<button class="btn back" onclick="goBack()">
+    BACK
+</button>
+
+<button class="btn confirm" onclick="submitWithdraw()">
+    CONFIRM
+</button>
+
 </div>
 
 <div class="row">
-<button class="btn change" onclick="openChangeQR()">CHANGE QR</button>
-<button class="btn bank" onclick="openBank()">BANK WITHDRAW</button>
-</div>
+
+<button class="btn change" onclick="openChangeQR()">
+    CHANGE QR
+</button>
+
+<button class="btn bank" onclick="openBank()">
+    BANK WITHDRAW
+</button>
+
 </div>
 
+</div>
+
+
+<!-- CHANGE QR -->
 <div class="card" id="changeQR" style="display:none;">
-<input type="file" id="newqr" onchange="previewNewQR()">
+
+<input
+    type="file"
+    id="newqr"
+    accept="image/*"
+    onchange="previewNewQR()"
+>
+
 <div id="newPreview"></div>
-<button class="main-btn" onclick="saveQR()">SAVE QR</button>
+
+<button class="main-btn" onclick="saveQR()">
+    SAVE QR
+</button>
+
 </div>
 
+
+<!-- BANK FORM -->
 <div class="card" id="bankForm" style="display:none;">
-<input type="text" id="name" placeholder="Account Holder Name">
-<input type="text" id="acc1" placeholder="Account Number">
-<input type="text" id="acc2" placeholder="Re-enter Account Number">
-<input type="text" id="ifsc" placeholder="IFSC Code">
-<button class="main-btn" onclick="submitBank()">SUBMIT</button>
+
+<input
+    type="text"
+    id="accountName"
+    placeholder="Account Holder Name"
+>
+
+<input
+    type="text"
+    id="accountNumber"
+    placeholder="Account Number"
+>
+
+<input
+    type="text"
+    id="accountNumber2"
+    placeholder="Re-enter Account Number"
+>
+
+<input
+    type="text"
+    id="ifsc"
+    placeholder="IFSC Code"
+>
+
+<button class="main-btn" onclick="submitBank()">
+    SUBMIT
+</button>
+
 </div>
+
 
 <script>
+
 const client = supabase.createClient(
-"https://katbdbzoufiblnnsoxkk.supabase.co",
-"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
-)
+    "https://katbdbzoufiblnnsoxkk.supabase.co",
+    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
 
-const user = JSON.parse(localStorage.getItem("user"))
 
+// USER
+const user = JSON.parse(localStorage.getItem("user"));
+
+if(!user){
+    window.location.href = "index.html";
+}
+
+
+// ELEMENTS
+const userId = document.getElementById("userId");
+const wallet = document.getElementById("wallet");
+const amount = document.getElementById("amount");
+
+const step1 = document.getElementById("step1");
+const step2 = document.getElementById("step2");
+
+const showAmount = document.getElementById("showAmount");
+
+const savedQR = document.getElementById("savedQR");
+
+const changeQR = document.getElementById("changeQR");
+const newqr = document.getElementById("newqr");
+const newPreview = document.getElementById("newPreview");
+
+const bankForm = document.getElementById("bankForm");
+
+const accountName = document.getElementById("accountName");
+const accountNumber = document.getElementById("accountNumber");
+const accountNumber2 = document.getElementById("accountNumber2");
+const ifsc = document.getElementById("ifsc");
+
+
+// LOAD USER
 async function loadUser(){
-    const { data } = await client.from("login").select("balance").eq("id", user.id).single()
-    wallet.innerText="₹ "+(data.balance||0)
-    userId.innerText="ID: "+user.id
-}
-loadUser()
 
-function loadQR(){
-    let qr = localStorage.getItem("user_qr")
-    savedQR.innerHTML = qr ? `<img src="${qr}">` : "No QR saved"
-}
-loadQR()
+    const { data, error } = await client
+        .from("login")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
 
-function openChangeQR(){
-    changeQR.style.display="block"
-}
-
-function goStep2(){
-    let amt=amount.value
-    if(!amt) return alert("Amount daal")
-    localStorage.setItem("withdraw_amount",amt)
-    showAmount.innerText=amt
-    step1.style.display="none"
-    step2.style.display="block"
-}
-
-function goBack(){
-    step2.style.display="none"
-    step1.style.display="block"
-}
-
-function previewNewQR(){
-    let file=newqr.files[0]
-    let reader=new FileReader()
-    reader.onload=e=>{
-        newPreview.innerHTML=`<img src="${e.target.result}" width="150">`
+    if(error){
+        console.log(error);
+        return;
     }
-    reader.readAsDataURL(file)
+
+    const balance = Number(data.balance || 0);
+
+    wallet.innerText = "₹ " + balance;
+    userId.innerText = "ID: " + user.id;
 }
 
+loadUser();
+
+
+// LOAD SAVED QR
+function loadQR(){
+
+    const qr = localStorage.getItem("user_qr");
+
+    if(qr){
+
+        savedQR.innerHTML =
+            `<img src="${qr}" alt="Saved QR">`;
+
+    }else{
+
+        savedQR.innerHTML = "No QR saved";
+
+    }
+}
+
+loadQR();
+
+
+// CHANGE QR
+function openChangeQR(){
+
+    changeQR.style.display = "block";
+
+}
+
+
+// STEP 1 → STEP 2
+async function goStep2(){
+
+    const amt = parseInt(amount.value);
+
+
+    // MINIMUM ₹100
+    if(!amt || amt < 100){
+
+        alert("Minimum Withdraw ₹100 hai ❌");
+
+        return;
+    }
+
+
+    // CHECK BALANCE
+    const { data, error } = await client
+        .from("login")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
+
+
+    if(error){
+
+        console.log(error);
+
+        alert("Balance check nahi ho paya");
+
+        return;
+    }
+
+
+    const balance = Number(data.balance || 0);
+
+
+    // BALANCE CHECK
+    if(amt > balance){
+
+        alert(
+            "Balance kam hai ❌\n\n" +
+            "Available Balance: ₹ " + balance
+        );
+
+        return;
+    }
+
+
+    // SAVE AMOUNT
+    localStorage.setItem(
+        "withdraw_amount",
+        amt
+    );
+
+
+    showAmount.innerText = amt;
+
+
+    // NEXT STEP
+    step1.style.display = "none";
+    step2.style.display = "block";
+
+}
+
+
+// BACK
+function goBack(){
+
+    step2.style.display = "none";
+    step1.style.display = "block";
+
+}
+
+
+// PREVIEW QR
+function previewNewQR(){
+
+    const file = newqr.files[0];
+
+    if(!file){
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        newPreview.innerHTML =
+            `<img src="${e.target.result}" width="150">`;
+
+    };
+
+    reader.readAsDataURL(file);
+
+}
+
+
+// SAVE QR
 async function saveQR(){
-    let file=newqr.files[0]
-    if(!file) return alert("QR upload kar")
 
-    let fileName="qr_"+Date.now()+file.name
-    await client.storage.from("screenshots").upload(fileName,file)
+    const file = newqr.files[0];
 
-    let { data }=client.storage.from("screenshots").getPublicUrl(fileName)
+    if(!file){
 
-    localStorage.setItem("user_qr",data.publicUrl)
+        alert("QR upload kar");
 
-    loadQR() // 🔥 instant show
-    changeQR.style.display="none"
+        return;
+    }
 
-    alert("QR Saved ✅")
+
+    const fileName =
+        "qr_" + Date.now() + "_" + file.name;
+
+
+    const { error } = await client
+        .storage
+        .from("screenshots")
+        .upload(fileName, file);
+
+
+    if(error){
+
+        console.log(error);
+
+        alert("QR upload nahi hua");
+
+        return;
+    }
+
+
+    const { data } =
+        client
+        .storage
+        .from("screenshots")
+        .getPublicUrl(fileName);
+
+
+    localStorage.setItem(
+        "user_qr",
+        data.publicUrl
+    );
+
+
+    loadQR();
+
+    changeQR.style.display = "none";
+
+    alert("QR Saved ✅");
+
 }
 
+
+// CONFIRM QR WITHDRAW
 async function submitWithdraw(){
 
-    let amount=parseInt(localStorage.getItem("withdraw_amount"))
-    let qr=localStorage.getItem("user_qr")
+    const withdrawAmount =
+        parseInt(
+            localStorage.getItem("withdraw_amount")
+        );
 
-    if(!qr) return alert("QR save kar")
 
-    let { data }=await client.from("login").select("balance").eq("id",user.id).single()
+    const qr =
+        localStorage.getItem("user_qr");
 
-    if(data.balance < amount){
-        alert("Balance kam hai ❌")
-        return
+
+    // MINIMUM CHECK AGAIN
+    if(!withdrawAmount || withdrawAmount < 100){
+
+        alert("Minimum Withdraw ₹100 hai ❌");
+
+        return;
     }
 
-    let newBalance=data.balance - amount
 
-    await client.from("login").update({balance:newBalance}).eq("id",user.id)
+    if(!qr){
 
-    await client.from("withdraw_requests").insert({
-        user_id:user.id,
-        mobile:user.mobile,
-        amount:amount,
-        upi:qr,
-        status:"pending"
-    })
+        alert("QR save kar");
 
-    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
-    location.reload()
+        return;
+    }
+
+
+    // LATEST BALANCE
+    const { data, error } = await client
+        .from("login")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
+
+
+    if(error){
+
+        console.log(error);
+
+        alert("Balance check nahi ho paya");
+
+        return;
+    }
+
+
+    const balance =
+        Number(data.balance || 0);
+
+
+    // BALANCE CHECK
+    if(withdrawAmount > balance){
+
+        alert(
+            "Balance kam hai ❌\n\n" +
+            "Available Balance: ₹ " + balance
+        );
+
+        return;
+    }
+
+
+    const newBalance =
+        balance - withdrawAmount;
+
+
+    // UPDATE BALANCE
+    const { error: balanceError } =
+        await client
+        .from("login")
+        .update({
+            balance: newBalance
+        })
+        .eq("id", user.id);
+
+
+    if(balanceError){
+
+        console.log(balanceError);
+
+        alert("Balance update nahi hua");
+
+        return;
+    }
+
+
+    // WITHDRAW REQUEST
+    const { error: requestError } =
+        await client
+        .from("withdraw_requests")
+        .insert({
+
+            user_id: user.id,
+
+            mobile: user.mobile,
+
+            amount: withdrawAmount,
+
+            upi: qr,
+
+            status: "pending"
+
+        });
+
+
+    if(requestError){
+
+        console.log(requestError);
+
+        alert(
+            "Withdraw request save nahi hui"
+        );
+
+        return;
+    }
+
+
+    alert(
+        "Withdraw Clear, wait for 5 min to 1 hour ✅"
+    );
+
+
+    localStorage.removeItem(
+        "withdraw_amount"
+    );
+
+
+    location.reload();
+
 }
 
+
+// BANK WITHDRAW
 function openBank(){
-    bankForm.style.display="block"
+
+    bankForm.style.display = "block";
+
 }
 
+
+// SUBMIT BANK
 async function submitBank(){
 
-    let name=nameInput.value
-    let acc1=acc1Input.value
-    let acc2=acc2Input.value
-    let ifsc=ifscInput.value
-    let amount=parseInt(localStorage.getItem("withdraw_amount"))
+    const name =
+        accountName.value.trim();
 
-    if(acc1!==acc2) return alert("Account match nahi")
+    const acc1 =
+        accountNumber.value.trim();
 
-    let { data }=await client.from("login").select("balance").eq("id",user.id).single()
+    const acc2 =
+        accountNumber2.value.trim();
 
-    if(data.balance < amount){
-        alert("Balance kam hai ❌")
-        return
+    const ifscCode =
+        ifsc.value.trim();
+
+
+    const withdrawAmount =
+        parseInt(
+            localStorage.getItem("withdraw_amount")
+        );
+
+
+    if(!name){
+
+        alert("Account Holder Name daal");
+
+        return;
     }
 
-    let newBalance=data.balance - amount
 
-    await client.from("login").update({balance:newBalance}).eq("id",user.id)
+    if(!acc1){
 
-    await client.from("withdraw_requests").insert({
-        user_id:user.id,
-        mobile:user.mobile,
-        amount:amount,
-        upi:name+" | "+acc1+" | "+ifsc,
-        status:"pending"
-    })
+        alert("Account Number daal");
 
-    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
-    location.reload()
+        return;
+    }
+
+
+    if(acc1 !== acc2){
+
+        alert(
+            "Account Number match nahi ❌"
+        );
+
+        return;
+    }
+
+
+    if(!ifscCode){
+
+        alert("IFSC Code daal");
+
+        return;
+    }
+
+
+    // MINIMUM CHECK AGAIN
+    if(!withdrawAmount || withdrawAmount < 100){
+
+        alert("Minimum Withdraw ₹100 hai ❌");
+
+        return;
+    }
+
+
+    // LATEST BALANCE
+    const { data, error } = await client
+        .from("login")
+        .select("balance")
+        .eq("id", user.id)
+        .single();
+
+
+    if(error){
+
+        console.log(error);
+
+        alert("Balance check nahi ho paya");
+
+        return;
+    }
+
+
+    const balance =
+        Number(data.balance || 0);
+
+
+    // BALANCE CHECK
+    if(withdrawAmount > balance){
+
+        alert(
+            "Balance kam hai ❌\n\n" +
+            "Available Balance: ₹ " + balance
+        );
+
+        return;
+    }
+
+
+    const newBalance =
+        balance - withdrawAmount;
+
+
+    // UPDATE BALANCE
+    const { error: balanceError } =
+        await client
+        .from("login")
+        .update({
+            balance: newBalance
+        })
+        .eq("id", user.id);
+
+
+    if(balanceError){
+
+        console.log(balanceError);
+
+        alert("Balance update nahi hua");
+
+        return;
+    }
+
+
+    // BANK REQUEST
+    const { error: requestError } =
+        await client
+        .from("withdraw_requests")
+        .insert({
+
+            user_id: user.id,
+
+            mobile: user.mobile,
+
+            amount: withdrawAmount,
+
+            upi:
+                name +
+                " | " +
+                acc1 +
+                " | " +
+                ifscCode,
+
+            status: "pending"
+
+        });
+
+
+    if(requestError){
+
+        console.log(requestError);
+
+        alert(
+            "Withdraw request save nahi hui"
+        );
+
+        return;
+    }
+
+
+    alert(
+        "Withdraw Clear, wait for 5 min to 1 hour ✅"
+    );
+
+
+    localStorage.removeItem(
+        "withdraw_amount"
+    );
+
+
+    location.reload();
+
 }
+
 </script>
 
 </body>
