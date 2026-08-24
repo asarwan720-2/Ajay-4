@@ -1,433 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-
-<meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>My Winning</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
-body{
-    font-family:Arial;
-    background:#f2f2f2;
-    margin:0;
-    padding:0;
-}
-
-.header{
-    background:green;
-    color:#fff;
-    text-align:center;
-    padding:15px;
-    font-size:20px;
-    font-weight:bold;
-}
-
-.card{
-    background:#fff;
-    margin:10px;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-
-.market{
-    font-size:17px;
-    font-weight:bold;
-    color:#333;
-}
-
-.date{
-    margin-top:7px;
-    color:#666;
-    font-size:14px;
-}
-
-.win{
-    color:green;
-    font-weight:bold;
-    font-size:20px;
-    margin-top:8px;
-}
-
-.empty{
-    text-align:center;
-    padding:30px 10px;
-    color:#666;
-}
-
-.error{
-    text-align:center;
-    padding:30px 10px;
-    color:red;
-}
-
-.loading{
-    text-align:center;
-    padding:30px 10px;
-    color:#555;
-}
-
+body{font-family:Arial;background:#f2f2f2;margin:0;}
+.header{background:green;color:#fff;text-align:center;padding:15px;}
+.card{background:#fff;margin:10px;padding:10px;border-radius:10px;}
+.win{color:green;font-weight:bold;}
 </style>
-
 </head>
-
 
 <body>
 
-
-<div class="header">
-    My Winning
-</div>
-
-
-<div id="list">
-
-    <div class="loading">
-        Loading...
-    </div>
-
-</div>
-
+<div class="header">My Winning</div>
+<div id="list">Loading...</div>
 
 <script>
 
-
-// ==========================================
-// SUPABASE
-// ==========================================
-
-const SUPABASE_URL =
-"https://katbdbzoufiblnnsoxkk.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a";
-
-
+// ✅ SUPABASE
 const client = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
 );
 
+// ✅ GET USER ID (FIXED)
+let userData = localStorage.getItem("user");
 
+if(!userData){
+    alert("Login first!");
+}
 
-// ==========================================
-// LOAD USER WINNING
-// ==========================================
+let userId;
 
-async function loadWinning(){
+try{
+    let parsed = JSON.parse(userData);
+    userId = parsed.id;
+}catch{
+    userId = userData;
+}
 
-    const list =
-        document.getElementById("list");
+userId = userId ? userId.toString().trim() : "";
 
+console.log("USER ID:", userId);
 
-    // ======================================
-    // GET LOGIN DATA
-    // ======================================
+// 🔥 LOAD DATA
+async function loadData(){
 
-    const userData =
-        localStorage.getItem("user");
-
-
-    // ======================================
-    // LOGIN CHECK
-    // ======================================
-
-    if(!userData){
-
-        list.innerHTML = `
-
-            <div class="error">
-
-                Please login first!
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-
-    // ======================================
-    // CONVERT USER DATA
-    // ======================================
-
-    let user;
-
-    try{
-
-        user =
-            JSON.parse(userData);
-
-    }catch(error){
-
-        console.log(
-            "USER DATA ERROR:",
-            error
-        );
-
-        list.innerHTML = `
-
-            <div class="error">
-
-                Login information is invalid.
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-
-    // ======================================
-    // LOGIN TABLE KI ID
-    // ======================================
-
-    const loginId = user.id;
-
-
-    console.log(
-        "LOGIN TABLE ID:",
-        loginId
-    );
-
-
-
-    // ======================================
-    // ID CHECK
-    // ======================================
-
-    if(
-        loginId === undefined ||
-        loginId === null ||
-        loginId === ""
-    ){
-
-        list.innerHTML = `
-
-            <div class="error">
-
-                User ID not found.
-                Please login again.
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-
-    // ======================================
-    // WINING TABLE SE DATA
-    // ======================================
-    //
-    // login.id
-    //      ↓
-    // wining.user_id
-    //
-    // ======================================
-
-    const {
-        data,
-        error
-    } = await client
-
-        .from("wining")
-
+    let {data, error} = await client
+        .from("admin wining")
         .select("*")
-
-        .eq(
-            "user_id",
-            loginId
-        )
-
-        .order(
-            "id",
-            {
-                ascending:false
-            }
-        );
-
-
-
-    // ======================================
-    // SUPABASE ERROR
-    // ======================================
+        .eq("user_id", userId)   // ✅ FINAL FIX
+        .order("id",{ascending:false});
 
     if(error){
-
-        console.log(
-            "WINING ERROR:",
-            error
-        );
-
-        list.innerHTML = `
-
-            <div class="error">
-
-                Error loading winning.
-
-            </div>
-
-        `;
-
+        console.log("ERROR:", error);
+        document.getElementById("list").innerHTML = "Error loading data";
         return;
     }
 
-
-
-    // ======================================
-    // DEBUG
-    // ======================================
-
-    console.log(
-        "CURRENT LOGIN ID:",
-        loginId
-    );
-
-    console.log(
-        "WINING DATA:",
-        data
-    );
-
-
-
-    // ======================================
-    // NO WINNING
-    // ======================================
-
-    if(
-        !data ||
-        data.length === 0
-    ){
-
-        list.innerHTML = `
-
-            <div class="empty">
-
-                <h3>No Winning Found</h3>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-
-    // ======================================
-    // SHOW WINNING
-    // ======================================
+    console.log("DATA:", data);
 
     let html = "";
 
+    if(data && data.length > 0){
 
+        data.forEach(function(item){
 
-    data.forEach(function(item){
+            let amount = item.amount || 0;
 
+            let date = item.created_at 
+                ? new Date(item.created_at).toLocaleString()
+                : "No Date";
 
-        // ==================================
-        // AMOUNT
-        // ==================================
-
-        const amount =
-            item.amount || 0;
-
-
-
-        // ==================================
-        // DATE
-        // ==================================
-
-        let date =
-            "No Date";
-
-
-        if(item.created_at){
-
-            date =
-                new Date(
-                    item.created_at
-                ).toLocaleString(
-                    "en-IN"
-                );
-
-        }
-
-
-
-        // ==================================
-        // CARD
-        // ==================================
-
-        html += `
-
+            html += `
             <div class="card">
-
-                <div class="market">
-
-                    Market:
-                    ${item.market || "-"}
-
-                </div>
-
-
-                <div class="date">
-
-                    Date:
-                    ${date}
-
-                </div>
-
-
-                <div class="win">
-
-                    ₹ ${amount}
-
-                </div>
-
+                <div><b>Market:</b> ${item.market || "-"}</div>
+                <div><b>Date:</b> ${date}</div>
+                <div class="win">₹ ${amount}</div>
             </div>
+            `;
+        });
 
-        `;
+    }else{
+        html = "<h3 style='padding:10px;'>No Winning Found</h3>";
+    }
 
-    });
-
-
-
-    // ======================================
-    // DISPLAY
-    // ======================================
-
-    list.innerHTML =
-        html;
-
+    document.getElementById("list").innerHTML = html;
 }
 
-
-
-// ==========================================
-// START
-// ==========================================
-
-loadWinning();
-
+loadData();
 
 </script>
 
-
 </body>
-
 </html>
