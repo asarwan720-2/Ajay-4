@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Number History</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+    margin:0;
+    background:#f2f2f2;
+    font-family:Arial;
+}
+
+/* HEADER */
+
+.header{
+    background:#fff;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+
+/* =====================================================
+   NUMBER HISTORY
+===================================================== */
+
+.filters{
+    background:#fff;
+    padding:10px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.filters select,
+.filters input{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-sizing:border-box;
+    background:white;
+    font-size:14px;
+}
+
+.date{
+    flex:1;
+    min-width:120px;
+}
+
+.marketFilter{
+    flex:1;
+    min-width:120px;
+}
+
+.number{
+    flex:1;
+    min-width:100px;
+}
+
+.search{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:green;
+    color:white;
+    font-weight:bold;
+    font-size:16px;
+}
+
+
+/* NUMBER TOTAL */
+
+.totalBox{
+    background:#fff;
+    margin:10px;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.totalAmount{
+    font-size:24px;
+    font-weight:bold;
+    color:red;
+}
+
+
+/* NUMBER RESULTS */
+
+#results{
+    padding:5px;
+}
+
+.card{
+    background:#fff;
+    margin:10px 5px;
+    padding:15px;
+    border-radius:12px;
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.market{
+    color:red;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.amount{
+    background:red;
+    color:white;
+    padding:6px 10px;
+    border-radius:7px;
+    font-weight:bold;
+}
+
+.info{
+    margin-top:8px;
+    line-height:1.7;
+}
+
+.dateText{
+    color:#777;
+    font-size:12px;
+    margin-top:8px;
+}
+
+.noData{
+    background:#fff;
+    margin:10px;
+    padding:20px;
+    text-align:center;
+    border-radius:12px;
+}
+
+.loading{
+    background:#fff;
+    margin:10px;
+    padding:20px;
+    text-align:center;
+    border-radius:12px;
+}
+
+
+/* =====================================================
+   HARF HISTORY
+===================================================== */
+
+.harfTitle{
+    background:#222;
+    color:white;
+    margin-top:20px;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+
+/* HARF FILTERS */
+
+.harfFilters{
+    background:#fff;
+    padding:10px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.harfFilters select,
+.harfFilters input{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-sizing:border-box;
+    background:white;
+    font-size:14px;
+}
+
+.harfDate{
+    flex:1;
+    min-width:110px;
+}
+
+.harfMarket{
+    flex:1;
+    min-width:110px;
+}
+
+.harfType{
+    flex:1;
+    min-width:110px;
+}
+
+.harfNumber{
+    flex:1;
+    min-width:100px;
+}
+
+.harfSearch{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#0066cc;
+    color:white;
+    font-weight:bold;
+    font-size:16px;
+}
+
+
+/* HARF TOTAL */
+
+.harfTotalBox{
+    background:#fff;
+    margin:10px;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.harfTotalAmount{
+    font-size:24px;
+    font-weight:bold;
+    color:#0066cc;
+}
+
+
+/* HARF RESULTS */
+
+#harfResults{
+    padding:5px;
+}
+
+.harfCard{
+    background:#fff;
+    margin:10px 5px;
+    padding:15px;
+    border-radius:12px;
+}
+
+.harfTop{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.harfMarketText{
+    color:#0066cc;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.harfAmount{
+    background:#0066cc;
+    color:white;
+    padding:6px 10px;
+    border-radius:7px;
+    font-weight:bold;
+}
+
+.harfInfo{
+    margin-top:8px;
+    line-height:1.7;
+}
+
+.andar{
+    color:green;
+    font-weight:bold;
+}
+
+.bahar{
+    color:#0066cc;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<div class="header">
+    Number History
+</div>
+
+
+<!-- =====================================================
+     NUMBER HISTORY FILTER
+===================================================== -->
+
+<div class="filters">
+
+
+    <!-- DATE -->
+
+    <select id="dateFilter" class="date">
+
+        <option value="">
+            All Date
+        </option>
+
+        <option value="today">
+            Today
+        </option>
+
+        <option value="yesterday">
+            Yesterday
+        </option>
+
+    </select>
+
+
+    <!-- NUMBER MARKET -->
+
+    <select id="marketFilter" class="marketFilter">
+
+        <option value="">
+            All Market
+        </option>
+
+    </select>
+
+
+    <!-- NUMBER -->
+
+    <input
+        type="number"
+        id="numberFilter"
+        class="number"
+        placeholder="Number"
+    >
+
+
+    <!-- NUMBER SEARCH -->
+
+    <button
+        class="search"
+        onclick="searchNumber()"
+    >
+        SEARCH
+    </button>
+
+</div>
+
+
+<!-- NUMBER TOTAL -->
+
+<div class="totalBox">
+
+    <div>
+        Number Total Amount
+    </div>
+
+    <div
+        class="totalAmount"
+        id="totalAmount"
+    >
+        ₹ 0
+    </div>
+
+</div>
+
+
+<!-- NUMBER RESULTS -->
+
+<div id="results">
+
+    <div class="loading">
+        Number search ke liye Number daalo
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     HARF HISTORY
+===================================================== -->
+
+<div class="harfTitle">
+    Harf History
+</div>
+
+
+<!-- HARF FILTERS -->
+
+<div class="harfFilters">
+
+
+    <!-- HARF DATE -->
+
+    <select
+        id="harfDateFilter"
+        class="harfDate"
+    >
+
+        <option value="">
+            All Date
+        </option>
+
+        <option value="today">
+            Today
+        </option>
+
+        <option value="yesterday">
+            Yesterday
+        </option>
+
+    </select>
+
+
+    <!-- HARF MARKET -->
+
+    <select
+        id="harfMarketFilter"
+        class="harfMarket"
+    >
+
+        <option value="">
+            All Market
+        </option>
+
+    </select>
+
+
+    <!-- A / B -->
+
+    <select
+        id="harfTypeFilter"
+        class="harfType"
+    >
+
+        <option value="">
+            A / B
+        </option>
+
+        <option value="A">
+            A - Andar
+        </option>
+
+        <option value="B">
+            B - Bahar
+        </option>
+
+    </select>
+
+
+    <!-- HARF NUMBER -->
+
+    <input
+        type="number"
+        id="harfNumberFilter"
+        class="harfNumber"
+        min="0"
+        max="9"
+        placeholder="Harf 0-9"
+    >
+
+
+    <!-- HARF SEARCH -->
+
+    <button
+        class="harfSearch"
+        onclick="searchHarf()"
+    >
+        SEARCH HARF
+    </button>
+
+</div>
+
+
+<!-- HARF TOTAL -->
+
+<div class="harfTotalBox">
+
+    <div>
+        Harf Total Amount
+    </div>
+
+    <div
+        class="harfTotalAmount"
+        id="harfTotalAmount"
+    >
+        ₹ 0
+    </div>
+
+</div>
+
+
+<!-- HARF RESULTS -->
+
+<div id="harfResults">
+
+    <div class="noData">
+        Harf number daal kar SEARCH HARF dabao
+    </div>
+
+</div>
+
+
+
+<script>
+
+
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const client = supabase.createClient(
+
+    "https://katbdbzoufiblnnsoxkk.supabase.co",
+
+    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+
+);
+
+
+/* =====================================================
+   ALL HISTORY
+===================================================== */
+
+let fullData = [];
+
+
+/* =====================================================
+   LOAD HISTORY
+===================================================== */
+
+async function loadHistory(){
+
+    const { data, error } = await client
+
+        .from("history")
+
+        .select("*")
+
+        .order("id", {
+            ascending:false
+        });
+
+
+    if(error){
+
+        console.log(error);
+
+        document.getElementById("results").innerHTML =
+
+            `<div class="noData">
+                Data load nahi hua
+            </div>`;
+
+        return;
+    }
+
+
+    fullData = data || [];
+
+
+    /*
+       DONO DROPDOWN ALAG HAIN
+    */
+
+    loadNumberMarkets();
+
+    loadHarfMarkets();
+
+}
+
+
+/* =====================================================
+   NUMBER MARKET DROPDOWN
+===================================================== */
+
+function loadNumberMarkets(){
+
+    const select =
+        document.getElementById(
+            "marketFilter"
+        );
+
+
+    const markets = new Set();
+
+
+    fullData.forEach(item => {
+
+        if(item.market){
+
+            markets.add(
+                String(item.market).trim()
+            );
+
+        }
+
+    });
+
+
+    const sorted =
+        Array.from(markets).sort();
+
+
+    select.innerHTML =
+
+        `<option value="">
+            All Market
+        </option>`;
+
+
+    sorted.forEach(market => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value = market;
+
+        option.textContent = market;
+
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+/* =====================================================
+   HARF MARKET DROPDOWN
+===================================================== */
+
+function loadHarfMarkets(){
+
+    const select =
+        document.getElementById(
+            "harfMarketFilter"
+        );
+
+
+    const markets = new Set();
+
+
+    fullData.forEach(item => {
+
+        if(item.market){
+
+            markets.add(
+                String(item.market).trim()
+            );
+
+        }
+
+    });
+
+
+    const sorted =
+        Array.from(markets).sort();
+
+
+    select.innerHTML =
+
+        `<option value="">
+            All Market
+        </option>`;
+
+
+    sorted.forEach(market => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value = market;
+
+        option.textContent = market;
+
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+/* =====================================================
+   LOAD
+===================================================== */
+
+loadHistory();
+
+
+
+/* =====================================================
+   DATE CHECK FUNCTION
+===================================================== */
+
+function checkDate(
+    createdAt,
+    filter
+){
+
+    if(!filter){
+
+        return true;
+
+    }
+
+
+    const itemDate =
+        new Date(createdAt);
+
+
+    const today =
+        new Date();
+
+
+    if(filter === "today"){
+
+        return (
+            itemDate.toDateString()
+            ===
+            today.toDateString()
+        );
+
+    }
+
+
+    if(filter === "yesterday"){
+
+        const yesterday =
+            new Date();
+
+
+        yesterday.setDate(
+            today.getDate() - 1
+        );
+
+
+        return (
+            itemDate.toDateString()
+            ===
+            yesterday.toDateString()
+        );
+
+    }
+
+
+    return true;
+
+}
+
+
+
+/* =====================================================
+   NUMBER SEARCH
+   ORIGINAL NUMBER SYSTEM
+===================================================== */
+
+function searchNumber(){
+
+
+    const numberInput =
+
+        document
+        .getElementById(
+            "numberFilter"
+        )
+        .value
+        .trim();
+
+
+    const dateFilter =
+
+        document
+        .getElementById(
+            "dateFilter"
+        )
+        .value;
+
+
+    const marketFilter =
+
+        document
+        .getElementById(
+            "marketFilter"
+        )
+        .value;
+
+
+    if(numberInput === ""){
+
+        alert(
+            "Number daalo"
+        );
+
+        return;
+
+    }
+
+
+    const searchNumber1 =
+        String(
+            Number(numberInput)
+        );
+
+
+    const searchNumber2 =
+        String(numberInput)
+        .padStart(2,"0");
+
+
+    let results = [];
+
+    let total = 0;
+
+
+    fullData.forEach(item => {
+
+
+        /* MARKET */
+
+        if(marketFilter){
+
+            const itemMarket =
+                String(
+                    item.market || ""
+                ).trim();
+
+
+            if(
+                itemMarket !==
+                marketFilter
+            ){
+
+                return;
+
+            }
+
+        }
+
+
+        /* DATE */
+
+        if(
+            !checkDate(
+                item.created_at,
+                dateFilter
+            )
+        ){
+
+            return;
+
+        }
+
+
+        /* DATA */
+
+        let parsed;
+
+
+        try{
+
+            if(!item.data){
+
+                return;
+
+            }
+
+
+            parsed =
+                typeof item.data === "string"
+
+                ? JSON.parse(item.data)
+
+                : item.data;
+
+
+            if(
+                !Array.isArray(parsed)
+            ){
+
+                parsed = [parsed];
+
+            }
+
+        }
+        catch(e){
+
+            return;
+
+        }
+
+
+        /* EACH ENTRY */
+
+        parsed.forEach(p => {
+
+
+            if(!p){
+
+                return;
+
+            }
+
+
+            /*
+               A/B HARF KO
+               NUMBER HISTORY ME
+               INCLUDE NAHI KARNA
+            */
+
+            if(
+                p.type === "A" ||
+                p.type === "B"
+            ){
+
+                return;
+
+            }
+
+
+            const numberValue =
+
+                p.number ??
+                p.num ??
+                null;
+
+
+            if(
+                numberValue === null
+            ){
+
+                return;
+
+            }
+
+
+            const numberString =
+                String(
+                    numberValue
+                );
+
+
+            const numberPadded =
+                numberString.padStart(
+                    2,
+                    "0"
+                );
+
+
+            const normalNumber =
+                String(
+                    Number(
+                        numberString
+                    )
+                );
+
+
+            if(
+
+                normalNumber !==
+                searchNumber1
+
+                &&
+
+                numberPadded !==
+                searchNumber2
+
+            ){
+
+                return;
+
+            }
+
+
+            const amount =
+
+                Number(
+
+                    p.amount ??
+
+                    p.a ??
+
+                    p.value ??
+
+                    0
+
+                );
+
+
+            total += amount;
+
+
+            results.push({
+
+                id:
+                    item.user_id,
+
+                market:
+                    item.market,
+
+                number:
+                    numberPadded,
+
+                amount:
+                    amount,
+
+                date:
+                    item.created_at
+
+            });
+
+
+        });
+
+
+    });
+
+
+    renderNumberResults(
+        results,
+        total
+    );
+
+}
+
+
+/* =====================================================
+   NUMBER RESULTS
+===================================================== */
+
+function renderNumberResults(
+    data,
+    total
+){
+
+    const resultsDiv =
+        document.getElementById(
+            "results"
+        );
+
+
+    const totalDiv =
+        document.getElementById(
+            "totalAmount"
+        );
+
+
+    totalDiv.innerText =
+        "₹ " + total;
+
+
+    if(data.length === 0){
+
+        resultsDiv.innerHTML =
+
+            `<div class="noData">
+                Is Market aur Number ka
+                data nahi mila
+            </div>`;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    data.forEach(item => {
+
+        html += `
+
+        <div class="card">
+
+            <div class="top">
+
+                <div class="market">
+                    ${item.market || "-"}
+                </div>
+
+                <div class="amount">
+                    ₹ ${item.amount}
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <b>User ID:</b>
+                ${item.id || "-"}
+
+                <br>
+
+                <b>Market:</b>
+                ${item.market || "-"}
+
+                <br>
+
+                <b>Number:</b>
+                ${item.number}
+
+                <br>
+
+                <b>Amount:</b>
+                ₹ ${item.amount}
+
+            </div>
+
+
+            <div class="dateText">
+
+                ${new Date(
+                    item.date
+                ).toLocaleString()}
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+
+    resultsDiv.innerHTML =
+        html;
+
+}
+
+
+
+/* =====================================================
+   HARF SEARCH
+===================================================== */
+
+function searchHarf(){
+
+
+    const dateFilter =
+
+        document
+        .getElementById(
+            "harfDateFilter"
+        )
+        .value;
+
+
+    const marketFilter =
+
+        document
+        .getElementById(
+            "harfMarketFilter"
+        )
+        .value;
+
+
+    const typeFilter =
+
+        document
+        .getElementById(
+            "harfTypeFilter"
+        )
+        .value;
+
+
+    const numberInput =
+
+        document
+        .getElementById(
+            "harfNumberFilter"
+        )
+        .value
+        .trim();
+
+
+    /* NUMBER REQUIRED */
+
+    if(numberInput === ""){
+
+        alert(
+            "Harf number daalo (0 se 9)"
+        );
+
+        return;
+
+    }
+
+
+    const harfNumber =
+        Number(numberInput);
+
+
+    /* ONLY 0-9 */
+
+    if(
+
+        !Number.isInteger(
+            harfNumber
+        )
+
+        ||
+
+        harfNumber < 0
+
+        ||
+
+        harfNumber > 9
+
+    ){
+
+        alert(
+            "Harf number sirf 0 se 9 tak hona chahiye"
+        );
+
+        return;
+
+    }
+
+
+    let results = [];
+
+    let total = 0;
+
+
+    /* HISTORY */
+
+    fullData.forEach(item => {
+
+
+        /* =================================
+           HARF MARKET
+        ================================= */
+
+        if(marketFilter){
+
+            const itemMarket =
+                String(
+                    item.market || ""
+                ).trim();
+
+
+            if(
+                itemMarket !==
+                marketFilter
+            ){
+
+                return;
+
+            }
+
+        }
+
+
+        /* =================================
+           HARF DATE
+        ================================= */
+
+        if(
+            !checkDate(
+                item.created_at,
+                dateFilter
+            )
+        ){
+
+            return;
+
+        }
+
+
+        /* =================================
+           DATA
+        ================================= */
+
+        let parsed;
+
+
+        try{
+
+            if(!item.data){
+
+                return;
+
+            }
+
+
+            parsed =
+
+                typeof item.data === "string"
+
+                ? JSON.parse(item.data)
+
+                : item.data;
+
+
+            if(
+                !Array.isArray(parsed)
+            ){
+
+                parsed = [parsed];
+
+            }
+
+        }
+        catch(e){
+
+            return;
+
+        }
+
+
+        /* =================================
+           EACH HARF ENTRY
+        ================================= */
+
+        parsed.forEach(p => {
+
+
+            if(!p){
+
+                return;
+
+            }
+
+
+            /*
+               ONLY HARF
+
+               A = ANDAR
+               B = BAHAR
+            */
+
+            if(
+
+                p.type !== "A"
+
+                &&
+
+                p.type !== "B"
+
+            ){
+
+                return;
+
+            }
+
+
+            /* A/B FILTER */
+
+            if(
+
+                typeFilter
+
+                &&
+
+                p.type !== typeFilter
+
+            ){
+
+                return;
+
+            }
+
+
+            /* NUMBER */
+
+            if(
+                p.number === null
+                ||
+                p.number === undefined
+            ){
+
+                return;
+
+            }
+
+
+            const entryNumber =
+                Number(
+                    p.number
+                );
+
+
+            /* HARF NUMBER MATCH */
+
+            if(
+                entryNumber !==
+                harfNumber
+            ){
+
+                return;
+
+            }
+
+
+            /* AMOUNT */
+
+            const amount =
+
+                Number(
+
+                    p.amount ??
+
+                    p.a ??
+
+                    p.value ??
+
+                    0
+
+                );
+
+
+            total += amount;
+
+
+            /* RESULT */
+
+            results.push({
+
+                id:
+                    item.user_id,
+
+                market:
+                    item.market,
+
+                type:
+                    p.type,
+
+                number:
+                    entryNumber,
+
+                amount:
+                    amount,
+
+                date:
+                    item.created_at
+
+            });
+
+
+        });
+
+
+    });
+
+
+    renderHarfResults(
+        results,
+        total
+    );
+
+}
+
+
+
+/* =====================================================
+   HARF RESULTS
+===================================================== */
+
+function renderHarfResults(
+    data,
+    total
+){
+
+    const resultsDiv =
+        document.getElementById(
+            "harfResults"
+        );
+
+
+    const totalDiv =
+        document.getElementById(
+            "harfTotalAmount"
+        );
+
+
+    totalDiv.innerText =
+        "₹ " + total;
+
+
+    if(data.length === 0){
+
+        resultsDiv.innerHTML =
+
+            `<div class="noData">
+                Is Date, Market, A/B aur
+                Harf Number ka data nahi mila
+            </div>`;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    data.forEach(item => {
+
+
+        const typeText =
+
+            item.type === "A"
+
+            ? "A - Andar"
+
+            : "B - Bahar";
+
+
+        const typeClass =
+
+            item.type === "A"
+
+            ? "andar"
+
+            : "bahar";
+
+
+        /*
+           A + 5 = 5×
+           B + 5 = ×5
+        */
+
+        const displayNumber =
+
+            item.type === "A"
+
+            ? item.number + "×"
+
+            : "×" + item.number;
+
+
+        html += `
+
+        <div class="harfCard">
+
+
+            <div class="harfTop">
+
+
+                <div class="harfMarketText">
+
+                    ${item.market || "-"}
+
+                </div>
+
+
+                <div class="harfAmount">
+
+                    ₹ ${item.amount}
+
+                </div>
+
+
+            </div>
+
+
+            <div class="harfInfo">
+
+
+                <b>User ID:</b>
+
+                ${item.id || "-"}
+
+
+                <br>
+
+
+                <b>Market:</b>
+
+                ${item.market || "-"}
+
+
+                <br>
+
+
+                <b>A/B:</b>
+
+                <span class="${typeClass}">
+
+                    ${typeText}
+
+                </span>
+
+
+                <br>
+
+
+                <b>Harf Number:</b>
+
+                ${displayNumber}
+
+
+                <br>
+
+
+                <b>Amount:</b>
+
+                ₹ ${item.amount}
+
+
+            </div>
+
+
+            <div class="dateText">
+
+                ${new Date(
+                    item.date
+                ).toLocaleString()}
+
+            </div>
+
+
+        </div>
+
+        `;
+
+    });
+
+
+    resultsDiv.innerHTML =
+        html;
+
+}
+
+</script>
+
+</body>
+</html>
