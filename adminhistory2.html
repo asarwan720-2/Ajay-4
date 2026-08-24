@@ -43,19 +43,23 @@ body{
     border:1px solid #ccc;
     border-radius:8px;
     box-sizing:border-box;
+    background:white;
+    font-size:14px;
 }
 
 .date{
     flex:1;
+    min-width:120px;
+}
+
+.marketFilter{
+    flex:1;
+    min-width:120px;
 }
 
 .number{
     flex:1;
     min-width:100px;
-}
-
-.harf{
-    flex:1;
 }
 
 .search{
@@ -125,16 +129,6 @@ body{
     line-height:1.7;
 }
 
-.harfA{
-    color:green;
-    font-weight:bold;
-}
-
-.harfB{
-    color:blue;
-    font-weight:bold;
-}
-
 .dateText{
     color:#777;
     font-size:12px;
@@ -142,6 +136,14 @@ body{
 }
 
 .noData{
+    background:#fff;
+    margin:10px;
+    padding:20px;
+    text-align:center;
+    border-radius:12px;
+}
+
+.loading{
     background:#fff;
     margin:10px;
     padding:20px;
@@ -165,6 +167,9 @@ body{
 
 <div class="filters">
 
+
+<!-- DATE -->
+
 <select id="dateFilter" class="date">
 
     <option value="">
@@ -182,6 +187,19 @@ body{
 </select>
 
 
+<!-- MARKET -->
+
+<select id="marketFilter" class="marketFilter">
+
+    <option value="">
+        All Market
+    </option>
+
+</select>
+
+
+<!-- NUMBER -->
+
 <input
     type="number"
     id="numberFilter"
@@ -190,22 +208,7 @@ body{
 />
 
 
-<select id="harfFilter" class="harf">
-
-    <option value="">
-        All Harf
-    </option>
-
-    <option value="A">
-        A
-    </option>
-
-    <option value="B">
-        B
-    </option>
-
-</select>
-
+<!-- SEARCH -->
 
 <button
     class="search"
@@ -213,6 +216,7 @@ body{
 >
     SEARCH
 </button>
+
 
 </div>
 
@@ -238,9 +242,11 @@ body{
 <!-- RESULTS -->
 
 <div id="results">
-    <div class="noData">
-        Number enter karke SEARCH dabao
+
+    <div class="loading">
+        History load ho rahi hai...
     </div>
+
 </div>
 
 
@@ -248,7 +254,9 @@ body{
 <script>
 
 
-/* SUPABASE */
+/* =========================================
+   SUPABASE
+========================================= */
 
 const client = supabase.createClient(
 
@@ -259,14 +267,16 @@ const client = supabase.createClient(
 );
 
 
-
-/* ALL HISTORY */
+/* =========================================
+   ALL HISTORY DATA
+========================================= */
 
 let fullData = [];
 
 
-
-/* LOAD HISTORY */
+/* =========================================
+   LOAD HISTORY
+========================================= */
 
 async function loadHistory(){
 
@@ -297,15 +307,83 @@ async function loadHistory(){
 
     fullData = data || [];
 
+
+    /* MARKET DROPDOWN */
+
+    loadMarkets();
+
 }
 
 
+/* =========================================
+   MARKET DROPDOWN LOAD
+========================================= */
+
+function loadMarkets(){
+
+    const marketSelect =
+        document.getElementById("marketFilter");
+
+
+    /* Existing markets */
+
+    const markets = new Set();
+
+
+    fullData.forEach(item => {
+
+        if(item.market){
+
+            markets.add(
+                String(item.market)
+            );
+
+        }
+
+    });
+
+
+    /* Sort */
+
+    const sortedMarkets =
+        Array.from(markets).sort();
+
+
+    /* Keep All Market */
+
+    marketSelect.innerHTML =
+
+        `<option value="">
+            All Market
+        </option>`;
+
+
+    sortedMarkets.forEach(market => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = market;
+
+        option.textContent = market;
+
+        marketSelect.appendChild(option);
+
+    });
+
+}
+
+
+/* =========================================
+   START LOAD
+========================================= */
 
 loadHistory();
 
 
-
-/* SEARCH */
+/* =========================================
+   SEARCH NUMBER
+========================================= */
 
 function searchNumber(){
 
@@ -325,35 +403,38 @@ function searchNumber(){
         .value;
 
 
-    const harfFilter =
+    const marketFilter =
 
         document
-        .getElementById("harfFilter")
+        .getElementById("marketFilter")
         .value;
 
 
+    /* NUMBER REQUIRED */
 
     if(numberInput === ""){
 
         alert("Number daalo");
 
         return;
+
     }
 
 
-
     /*
-       45 ko "45" format me rakhenge
-       5 ko "05" bhi match karne ki koshish hogi
+       Example:
+
+       5  -> 5 and 05
+       05 -> 5 and 05
+       45 -> 45
     */
 
     const searchNumber1 =
-        String(numberInput);
+        String(Number(numberInput));
 
 
     const searchNumber2 =
         String(numberInput).padStart(2,"0");
-
 
 
     let results = [];
@@ -361,13 +442,35 @@ function searchNumber(){
     let total = 0;
 
 
-
-    /* HISTORY LOOP */
+    /* =====================================
+       HISTORY LOOP
+    ===================================== */
 
     fullData.forEach(item => {
 
 
-        /* DATE FILTER */
+        /* =================================
+           MARKET FILTER
+        ================================= */
+
+        if(marketFilter){
+
+            const itemMarket =
+                String(item.market || "")
+                .trim();
+
+            if(itemMarket !== marketFilter){
+
+                return;
+
+            }
+
+        }
+
+
+        /* =================================
+           DATE FILTER
+        ================================= */
 
         if(dateFilter){
 
@@ -387,6 +490,7 @@ function searchNumber(){
                 ){
 
                     return;
+
                 }
 
             }
@@ -409,6 +513,7 @@ function searchNumber(){
                 ){
 
                     return;
+
                 }
 
             }
@@ -416,8 +521,9 @@ function searchNumber(){
         }
 
 
-
-        /* DATA JSON */
+        /* =================================
+           DATA JSON
+        ================================= */
 
         let parsed;
 
@@ -427,6 +533,7 @@ function searchNumber(){
             if(!item.data){
 
                 return;
+
             }
 
 
@@ -444,15 +551,23 @@ function searchNumber(){
 
             }
 
-        }catch(e){
+        }
+
+        catch(e){
+
+            console.log(
+                "JSON Error:",
+                e
+            );
 
             return;
 
         }
 
 
-
-        /* EACH ENTRY */
+        /* =================================
+           EACH ENTRY
+        ================================= */
 
         parsed.forEach(p => {
 
@@ -464,10 +579,10 @@ function searchNumber(){
             }
 
 
-
             /* NUMBER */
 
             const numberValue =
+
                 p.number ??
                 p.num ??
                 null;
@@ -480,7 +595,6 @@ function searchNumber(){
             }
 
 
-
             const numberString =
                 String(numberValue);
 
@@ -489,44 +603,33 @@ function searchNumber(){
                 numberString.padStart(2,"0");
 
 
+            /* =================================
+               NUMBER MATCH
+            ================================= */
 
-            /* NUMBER MATCH */
+            const normalNumber =
+                String(
+                    Number(numberString)
+                );
+
+
+            const paddedSearch =
+                String(numberInput)
+                .padStart(2,"0");
+
 
             if(
-                numberString !== searchNumber1
+
+                normalNumber !== searchNumber1
+
                 &&
+
                 numberPadded !== searchNumber2
-            ){
 
-                return;
-            }
-
-
-
-            /* HARF */
-
-            let harf = "";
-
-
-            if(p.type === "A"){
-
-                harf = "A";
-
-            }
-            else if(p.type === "B"){
-
-                harf = "B";
-
-            }
-
-
-
-            /* HARF FILTER */
-
-            if(
-                harfFilter
                 &&
-                harf !== harfFilter
+
+                numberPadded !== paddedSearch
+
             ){
 
                 return;
@@ -534,39 +637,48 @@ function searchNumber(){
             }
 
 
-
-            /* AMOUNT */
+            /* =================================
+               AMOUNT
+            ================================= */
 
             const amount =
 
                 Number(
+
                     p.amount ??
+
                     p.a ??
+
                     p.value ??
+
                     0
+
                 );
 
 
             total += amount;
 
 
-
-            /* RESULT */
+            /* =================================
+               RESULT
+            ================================= */
 
             results.push({
 
-                id: item.user_id,
+                id:
+                    item.user_id,
 
-                market: item.market,
+                market:
+                    item.market,
 
                 number:
                     numberPadded,
 
-                harf: harf || "-",
+                amount:
+                    amount,
 
-                amount: amount,
-
-                date: item.created_at
+                date:
+                    item.created_at
 
             });
 
@@ -577,16 +689,26 @@ function searchNumber(){
     });
 
 
+    /* =====================================
+       RENDER
+    ===================================== */
 
-    renderResults(results, total);
+    renderResults(
+        results,
+        total
+    );
 
 }
 
 
+/* =========================================
+   RENDER RESULTS
+========================================= */
 
-/* RENDER */
-
-function renderResults(data, total){
+function renderResults(
+    data,
+    total
+){
 
 
     const resultsDiv =
@@ -597,78 +719,96 @@ function renderResults(data, total){
         document.getElementById("totalAmount");
 
 
+    /* TOTAL */
 
     totalDiv.innerText =
         "₹ " + total;
 
 
+    /* NO DATA */
 
     if(data.length === 0){
 
         resultsDiv.innerHTML =
 
             `<div class="noData">
-                Is number ka data nahi mila
+
+                Is Market aur Number ka
+                data nahi mila
+
             </div>`;
 
         return;
-    }
 
+    }
 
 
     let html = "";
 
 
+    /* =====================================
+       CARDS
+    ===================================== */
 
     data.forEach(item => {
-
-
-        const harfClass =
-
-            item.harf === "A"
-
-            ? "harfA"
-
-            : "harfB";
-
 
 
         html += `
 
         <div class="card">
 
+
             <div class="top">
 
+
                 <div class="market">
+
                     ${item.market || "-"}
+
                 </div>
 
+
                 <div class="amount">
+
                     ₹ ${item.amount}
+
                 </div>
+
 
             </div>
 
 
             <div class="info">
 
-                <b>ID:</b>
+
+                <b>User ID:</b>
+
                 ${item.id || "-"}
+
+
+                <br>
+
+
+                <b>Market:</b>
+
+                ${item.market || "-"}
+
 
                 <br>
 
 
                 <b>Number:</b>
+
                 ${item.number}
+
 
                 <br>
 
 
-                <b>Harf:</b>
+                <b>Amount:</b>
 
-                <span class="${harfClass}">
-                    ${item.harf}
-                </span>
+                ₹ ${item.amount}
+
 
             </div>
 
@@ -681,6 +821,7 @@ function renderResults(data, total){
 
             </div>
 
+
         </div>
 
         `;
@@ -688,8 +829,8 @@ function renderResults(data, total){
     });
 
 
-
-    resultsDiv.innerHTML = html;
+    resultsDiv.innerHTML =
+        html;
 
 }
 
