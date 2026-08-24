@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Reward Admin</title>
+<title>Admin Entry</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -36,7 +36,7 @@ body{
 
 label{
     display:block;
-    margin-top:12px;
+    margin-top:14px;
     margin-bottom:6px;
     font-weight:bold;
 }
@@ -53,7 +53,7 @@ input{
 
 button{
     width:100%;
-    margin-top:18px;
+    margin-top:20px;
     padding:14px;
     border:0;
     border-radius:8px;
@@ -63,13 +63,9 @@ button{
     font-weight:bold;
 }
 
-button:active{
-    transform:scale(.98);
-}
-
 .message{
     text-align:center;
-    margin:12px;
+    margin:15px;
     font-weight:bold;
 }
 
@@ -82,91 +78,63 @@ button:active{
 }
 
 </style>
-
 </head>
 
 <body>
 
 <div class="header">
-    Reward Admin
+    Admin Entry
 </div>
-
 
 <div class="card">
 
     <label>User ID</label>
 
     <select id="userId">
-
-        <option value="">
-            Select User ID
-        </option>
-
+        <option value="">Loading User IDs...</option>
     </select>
 
 
     <label>Date</label>
 
-    <select id="rewardDate">
-
-        <option value="">
-            Select Date
-        </option>
-
+    <select id="entryDate">
+        <option value="">Select Date</option>
     </select>
 
 
-    <label>Category</label>
+    <label>Market</label>
 
-    <select id="category">
-
-        <option value="">
-            Select Category
-        </option>
-
-        <option value="Reward">
-            Reward
-        </option>
-
-        <option value="Bonus">
-            Bonus
-        </option>
-
-        <option value="Points">
-            Points
-        </option>
-
-    </select>
+    <input
+        type="text"
+        id="market"
+        placeholder="Enter Market"
+    >
 
 
-    <label>Points</label>
+    <label>Amount</label>
 
     <input
         type="number"
         id="amount"
-        placeholder="Enter points"
+        placeholder="Enter Amount"
         min="0"
     >
 
 
-    <button onclick="addReward()">
-        ADD REWARD
+    <button onclick="addEntry()">
+        ADD ENTRY
     </button>
 
 </div>
 
-
-<div id="message"
-     class="message">
-</div>
+<div id="message" class="message"></div>
 
 
 <script>
 
-
-// ======================================
+// ==========================================
 // SUPABASE
-// ======================================
+// ==========================================
 
 const SUPABASE_URL =
 "https://katbdbzoufiblnnsoxkk.supabase.co";
@@ -181,9 +149,9 @@ window.supabase.createClient(
 );
 
 
-// ======================================
-// LOAD USER IDs
-// ======================================
+// ==========================================
+// LOAD USER IDs FROM LOGIN TABLE
+// ==========================================
 
 async function loadUsers(){
 
@@ -194,37 +162,37 @@ async function loadUsers(){
         data,
         error
     } = await client
-
         .from("login")
-
         .select("id")
-
         .order("id", {
             ascending:true
         });
 
-
     if(error){
 
-        console.log(error);
+        console.log("USER ERROR:", error);
 
         select.innerHTML = `
             <option value="">
-                User ID loading error
+                Error loading User IDs
             </option>
         `;
 
         return;
     }
 
+    select.innerHTML = `
+        <option value="">
+            Select User ID
+        </option>
+    `;
 
     data.forEach(function(user){
 
         const option =
             document.createElement("option");
 
-        option.value =
-            user.id;
+        option.value = user.id;
 
         option.textContent =
             "User ID: " + user.id;
@@ -236,36 +204,31 @@ async function loadUsers(){
 }
 
 
-// ======================================
+// ==========================================
 // LOAD DATES
-// ======================================
+// ==========================================
 
 function loadDates(){
 
     const select =
-        document.getElementById("rewardDate");
+        document.getElementById("entryDate");
 
-
-    const today =
-        new Date();
-
+    const today = new Date();
 
     for(let i = 0; i < 30; i++){
 
-        const date =
-            new Date(today);
+        const date = new Date(today);
 
         date.setDate(
             today.getDate() - i
         );
-
 
         const year =
             date.getFullYear();
 
         const month =
             String(
-                date.getMonth()+1
+                date.getMonth() + 1
             ).padStart(2,"0");
 
         const day =
@@ -273,20 +236,16 @@ function loadDates(){
                 date.getDate()
             ).padStart(2,"0");
 
-
         const value =
             `${year}-${month}-${day}`;
-
 
         const option =
             document.createElement("option");
 
-        option.value =
-            value;
+        option.value = value;
 
         option.textContent =
             `${day}-${month}-${year}`;
-
 
         select.appendChild(option);
 
@@ -295,111 +254,103 @@ function loadDates(){
 }
 
 
-// ======================================
-// ADD REWARD
-// ======================================
+// ==========================================
+// ADD ROW
+// ==========================================
 
-async function addReward(){
+async function addEntry(){
 
     const userId =
-        document.getElementById(
-            "userId"
-        ).value;
+        document.getElementById("userId").value;
 
-    const rewardDate =
-        document.getElementById(
-            "rewardDate"
-        ).value;
+    const entryDate =
+        document.getElementById("entryDate").value;
 
-    const category =
-        document.getElementById(
-            "category"
-        ).value;
+    const market =
+        document.getElementById("market")
+        .value
+        .trim();
 
     const amount =
-        document.getElementById(
-            "amount"
-        ).value;
-
+        document.getElementById("amount").value;
 
     const message =
-        document.getElementById(
-            "message"
-        );
+        document.getElementById("message");
 
 
     message.innerHTML = "";
-    message.className =
-        "message";
+    message.className = "message";
 
 
     if(
         !userId ||
-        !rewardDate ||
-        !category ||
+        !entryDate ||
+        !market ||
         !amount
     ){
 
         message.innerHTML =
             "Please fill all fields.";
 
-        message.classList.add(
-            "error"
-        );
+        message.classList.add("error");
 
         return;
     }
 
 
-    // ==================================
-    // INSERT
-    // ==================================
+    // ======================================
+    // INSERT ROW
+    // ======================================
 
     const {
         data,
         error
     } = await client
 
-        .from("rewards")
+        .from("wining")
 
         .insert({
 
-            user_id: userId,
+            user_id: Number(userId),
 
-            reward_date: rewardDate,
+            market: market,
 
-            category: category,
+            amount: Number(amount),
 
-            amount: Number(amount)
+            created_at:
+                entryDate + "T00:00:00"
 
-        });
+        })
+        .select();
 
 
     if(error){
 
         console.log(
-            "SUPABASE ERROR:",
+            "SUPABASE INSERT ERROR:",
             error
         );
 
         message.innerHTML =
-            "Error adding reward.";
+            "Error: " + error.message;
 
-        message.classList.add(
-            "error"
-        );
+        message.classList.add("error");
 
         return;
     }
 
 
     message.innerHTML =
-        "Reward added successfully ✅";
+        "Row added successfully ✅";
 
-    message.classList.add(
-        "success"
-    );
+    message.classList.add("success");
 
+
+    // Clear market and amount
+
+    document.getElementById(
+        "market"
+    ).value = "";
 
     document.getElementById(
         "amount"
@@ -408,17 +359,15 @@ async function addReward(){
 }
 
 
-// ======================================
+// ==========================================
 // START
-// ======================================
+// ==========================================
 
 loadUsers();
 
 loadDates();
 
-
 </script>
 
 </body>
-
 </html>
