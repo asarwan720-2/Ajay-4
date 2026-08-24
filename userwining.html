@@ -1,16 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
+<meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>My Winning</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+
 body{
     font-family:Arial;
     background:#f2f2f2;
     margin:0;
+    padding:0;
 }
 
 .header{
@@ -28,6 +35,18 @@ body{
     padding:15px;
     border-radius:10px;
     box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.market{
+    font-size:17px;
+    font-weight:bold;
+    color:#333;
+}
+
+.date{
+    margin-top:7px;
+    color:#666;
+    font-size:14px;
 }
 
 .win{
@@ -48,207 +67,367 @@ body{
     padding:30px 10px;
     color:red;
 }
+
+.loading{
+    text-align:center;
+    padding:30px 10px;
+    color:#555;
+}
+
 </style>
+
 </head>
+
 
 <body>
 
-<div class="header">My Winning</div>
+
+<div class="header">
+    My Winning
+</div>
+
 
 <div id="list">
-    Loading...
+
+    <div class="loading">
+        Loading...
+    </div>
+
 </div>
+
 
 <script>
 
-// ================================
+
+// ==========================================
 // SUPABASE
-// ================================
+// ==========================================
+
+const SUPABASE_URL =
+"https://katbdbzoufiblnnsoxkk.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a";
+
 
 const client = window.supabase.createClient(
-    "https://katbdbzoufiblnnsoxkk.supabase.co",
-    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+    SUPABASE_URL,
+    SUPABASE_KEY
 );
 
 
-// ================================
-// GET LOGIN USER
-// ================================
 
-let userData = localStorage.getItem("user");
+// ==========================================
+// LOAD USER WINNING
+// ==========================================
 
-if(!userData){
+async function loadWinning(){
 
-    document.getElementById("list").innerHTML = `
-        <div class="error">
-            Please login first!
-        </div>
-    `;
+    const list =
+        document.getElementById("list");
 
-}else{
 
-    let userId = "";
+    // ======================================
+    // GET LOGIN DATA
+    // ======================================
+
+    const userData =
+        localStorage.getItem("user");
+
+
+    // ======================================
+    // LOGIN CHECK
+    // ======================================
+
+    if(!userData){
+
+        list.innerHTML = `
+
+            <div class="error">
+
+                Please login first!
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+
+    // ======================================
+    // CONVERT USER DATA
+    // ======================================
+
+    let user;
 
     try{
 
-        let parsed = JSON.parse(userData);
-
-        if(parsed && parsed.id){
-            userId = parsed.id;
-        }
+        user =
+            JSON.parse(userData);
 
     }catch(error){
 
-        userId = userData;
+        console.log(
+            "USER DATA ERROR:",
+            error
+        );
 
+        list.innerHTML = `
+
+            <div class="error">
+
+                Login information is invalid.
+
+            </div>
+
+        `;
+
+        return;
     }
 
 
-    userId = userId
-        ? userId.toString().trim()
-        : "";
+
+    // ======================================
+    // LOGIN TABLE KI ID
+    // ======================================
+
+    const loginId = user.id;
 
 
-    console.log("LOGIN USER ID:", userId);
+    console.log(
+        "LOGIN TABLE ID:",
+        loginId
+    );
 
 
-    // ================================
-    // LOAD WINNING
-    // ================================
 
-    async function loadData(){
+    // ======================================
+    // ID CHECK
+    // ======================================
 
-        if(!userId){
+    if(
+        loginId === undefined ||
+        loginId === null ||
+        loginId === ""
+    ){
 
-            document.getElementById("list").innerHTML = `
-                <div class="error">
-                    User ID not found. Please login again.
-                </div>
-            `;
+        list.innerHTML = `
 
-            return;
-        }
+            <div class="error">
+
+                User ID not found.
+                Please login again.
+
+            </div>
+
+        `;
+
+        return;
+    }
 
 
-        const { data, error } = await client
 
-            // IMPORTANT:
-            // Supabase table = wining
+    // ======================================
+    // WINING TABLE SE DATA
+    // ======================================
+    //
+    // login.id
+    //      ↓
+    // wining.user_id
+    //
+    // ======================================
 
-            .from("wining")
+    const {
+        data,
+        error
+    } = await client
 
-            .select("*")
+        .from("wining")
 
-            // Sirf current login user ka data
+        .select("*")
 
-            .eq("user_id", userId)
+        .eq(
+            "user_id",
+            loginId
+        )
 
-            // Latest winning upar
-
-            .order("id", {
+        .order(
+            "id",
+            {
                 ascending:false
-            });
-
-
-        // ================================
-        // ERROR
-        // ================================
-
-        if(error){
-
-            console.log("SUPABASE ERROR:", error);
-
-            document.getElementById("list").innerHTML = `
-                <div class="error">
-                    Error loading winning
-                </div>
-            `;
-
-            return;
-        }
-
-
-        console.log("WINNING DATA:", data);
-
-
-        // ================================
-        // NO DATA
-        // ================================
-
-        if(!data || data.length === 0){
-
-            document.getElementById("list").innerHTML = `
-                <div class="empty">
-                    <h3>No Winning Found</h3>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        // ================================
-        // SHOW DATA
-        // ================================
-
-        let html = "";
-
-
-        data.forEach(function(item){
-
-            let amount = item.amount || 0;
-
-
-            let date = "No Date";
-
-            if(item.created_at){
-
-                date = new Date(
-                    item.created_at
-                ).toLocaleString("en-IN");
-
             }
+        );
 
 
-            html += `
 
-                <div class="card">
+    // ======================================
+    // SUPABASE ERROR
+    // ======================================
 
-                    <div>
-                        <b>Market:</b>
-                        ${item.market || "-"}
-                    </div>
+    if(error){
 
-                    <div style="margin-top:6px;">
-                        <b>Date:</b>
-                        ${date}
-                    </div>
+        console.log(
+            "WINING ERROR:",
+            error
+        );
 
-                    <div class="win">
-                        ₹ ${amount}
-                    </div>
+        list.innerHTML = `
 
-                </div>
+            <div class="error">
 
-            `;
+                Error loading winning.
 
-        });
+            </div>
 
+        `;
 
-        document.getElementById("list").innerHTML = html;
-
+        return;
     }
 
 
-    // ================================
-    // START
-    // ================================
 
-    loadData();
+    // ======================================
+    // DEBUG
+    // ======================================
+
+    console.log(
+        "CURRENT LOGIN ID:",
+        loginId
+    );
+
+    console.log(
+        "WINING DATA:",
+        data
+    );
+
+
+
+    // ======================================
+    // NO WINNING
+    // ======================================
+
+    if(
+        !data ||
+        data.length === 0
+    ){
+
+        list.innerHTML = `
+
+            <div class="empty">
+
+                <h3>No Winning Found</h3>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+
+    // ======================================
+    // SHOW WINNING
+    // ======================================
+
+    let html = "";
+
+
+
+    data.forEach(function(item){
+
+
+        // ==================================
+        // AMOUNT
+        // ==================================
+
+        const amount =
+            item.amount || 0;
+
+
+
+        // ==================================
+        // DATE
+        // ==================================
+
+        let date =
+            "No Date";
+
+
+        if(item.created_at){
+
+            date =
+                new Date(
+                    item.created_at
+                ).toLocaleString(
+                    "en-IN"
+                );
+
+        }
+
+
+
+        // ==================================
+        // CARD
+        // ==================================
+
+        html += `
+
+            <div class="card">
+
+                <div class="market">
+
+                    Market:
+                    ${item.market || "-"}
+
+                </div>
+
+
+                <div class="date">
+
+                    Date:
+                    ${date}
+
+                </div>
+
+
+                <div class="win">
+
+                    ₹ ${amount}
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+
+
+    // ======================================
+    // DISPLAY
+    // ======================================
+
+    list.innerHTML =
+        html;
 
 }
 
+
+
+// ==========================================
+// START
+// ==========================================
+
+loadWinning();
+
+
 </script>
 
+
 </body>
+
 </html>
