@@ -1,955 +1,229 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Number History</title>
+<title>Admin History</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+body{background:#f2f2f2;font-family:Arial;margin:0;}
 
-body{
-    margin:0;
-    background:#f2f2f2;
-    font-family:Arial;
-}
-
-/* HEADER */
-
-.header{
-    background:#fff;
-    padding:15px;
-    text-align:center;
-    font-size:20px;
-    font-weight:bold;
-}
-
-
-/* FILTER */
+.header{background:#fff;padding:15px;text-align:center;font-weight:bold;}
 
 .filters{
-    background:#fff;
-    padding:10px;
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
+display:flex;
+gap:10px;
+padding:10px;
 }
 
-.filters select,
-.filters input{
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    box-sizing:border-box;
-    background:white;
-    font-size:14px;
+select{
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
 }
 
-.date{
-    flex:1;
-    min-width:120px;
-}
-
-.marketFilter{
-    flex:1;
-    min-width:120px;
-}
-
-.number{
-    flex:1;
-    min-width:100px;
-}
-
-
-/* SEARCH */
-
-.search{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:green;
-    color:white;
-    font-weight:bold;
-    font-size:16px;
-}
-
-
-/* A / B */
-
-.harf{
-    width:100%;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    box-sizing:border-box;
-    background:white;
-    font-size:14px;
-}
-
-
-/* TOTAL */
-
-.totalBox{
-    background:#fff;
-    margin:10px;
-    padding:15px;
-    border-radius:12px;
-    text-align:center;
-}
-
-.totalAmount{
-    font-size:24px;
-    font-weight:bold;
-    color:red;
-}
-
-
-/* RESULT */
-
-#results{
-    padding:5px;
-}
-
-.card{
-    background:#fff;
-    margin:10px 5px;
-    padding:15px;
-    border-radius:12px;
-}
-
-.top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.market{
-    color:red;
-    font-weight:bold;
-    font-size:18px;
-}
-
-.amount{
-    background:red;
-    color:white;
-    padding:6px 10px;
-    border-radius:7px;
-    font-weight:bold;
-}
-
-.info{
-    margin-top:8px;
-    line-height:1.7;
-}
-
-.harfA{
-    color:green;
-    font-weight:bold;
-}
-
-.harfB{
-    color:blue;
-    font-weight:bold;
-}
-
-.dateText{
-    color:#777;
-    font-size:12px;
-    margin-top:8px;
-}
-
-.noData{
-    background:#fff;
-    margin:10px;
-    padding:20px;
-    text-align:center;
-    border-radius:12px;
-}
-
-.loading{
-    background:#fff;
-    margin:10px;
-    padding:20px;
-    text-align:center;
-    border-radius:12px;
-}
-
+.card{background:#fff;margin:10px;padding:15px;border-radius:12px;}
+.row{display:flex;justify-content:space-between;}
+.market{color:red;font-weight:bold;}
+.date{font-size:12px;color:#666;margin-top:5px;}
+.amount{background:red;color:#fff;padding:5px 10px;border-radius:6px;}
 </style>
-
 </head>
 
 <body>
 
-
-<!-- HEADER -->
-
-<div class="header">
-    Number History
-</div>
-
+<div class="header">Admin History</div>
 
 <!-- FILTERS -->
-
 <div class="filters">
-
-
-<!-- DATE -->
-
-<select id="dateFilter" class="date">
-
-    <option value="">
-        All Date
-    </option>
-
-    <option value="today">
-        Today
-    </option>
-
-    <option value="yesterday">
-        Yesterday
-    </option>
-
+<select id="dateFilter" onchange="filterData()">
+<option value="">All Date</option>
+<option value="today">Today</option>
+<option value="yesterday">Yesterday</option>
 </select>
 
-
-<!-- MARKET -->
-
-<select id="marketFilter" class="marketFilter">
-
-    <option value="">
-        All Market
-    </option>
-
+<select id="marketFilter" onchange="filterData()">
+<option value="">All Market</option>
 </select>
 
-
-<!-- NUMBER -->
-
-<input
-    type="number"
-    id="numberFilter"
-    class="number"
-    placeholder="Number"
-/>
-
-
-<!-- SEARCH -->
-
-<button
-    class="search"
-    onclick="searchNumber()"
->
-    SEARCH
-</button>
-
-
-<!-- A / B DROPDOWN -->
-
-<select id="harfFilter" class="harf">
-
-    <option value="">
-        All A/B
-    </option>
-
-    <option value="A">
-        A
-    </option>
-
-    <option value="B">
-        B
-    </option>
-
+<select id="amountFilter" onchange="filterData()">
+<option value="">All Amount</option>
+<option value="100">100+</option>
+<option value="500">500+</option>
+<option value="1000">1000+</option>
 </select>
-
-
 </div>
 
-
-<!-- TOTAL -->
-
-<div class="totalBox">
-
-    <div>
-        Total Amount
-    </div>
-
-    <div
-        class="totalAmount"
-        id="totalAmount"
-    >
-        ₹ 0
-    </div>
-
-</div>
-
-
-<!-- RESULTS -->
-
-<div id="results">
-
-    <div class="loading">
-        History load ho rahi hai...
-    </div>
-
-</div>
-
-
+<div id="history"></div>
 
 <script>
 
-
-/* =========================================
-   SUPABASE
-========================================= */
-
 const client = supabase.createClient(
-
-    "https://katbdbzoufiblnnsoxkk.supabase.co",
-
-    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
-
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
 );
-
-
-/* =========================================
-   ALL HISTORY DATA
-========================================= */
 
 let fullData = [];
 
-
-/* =========================================
-   LOAD HISTORY
-========================================= */
-
+// LOAD
 async function loadHistory(){
 
-    const { data, error } = await client
+let {data,error} = await client
+.from("history")
+.select("*")
+.order("id",{ascending:false});
 
-        .from("history")
+if(error){ console.log(error); return; }
 
-        .select("*")
+fullData = data;
 
-        .order("id", {
-            ascending:false
-        });
+// AUTO MARKET
+let markets = [...new Set(data.map(d => d.market))];
+let html = `<option value="">All Market</option>`;
 
+markets.forEach(m=>{
+if(m) html += `<option value="${m}">${m}</option>`;
+});
 
-    if(error){
+document.getElementById("marketFilter").innerHTML = html;
 
-        console.log(error);
-
-        document.getElementById("results").innerHTML =
-
-            `<div class="noData">
-                Data load nahi hua
-            </div>`;
-
-        return;
-    }
-
-
-    fullData = data || [];
-
-
-    /* LOAD MARKET */
-
-    loadMarkets();
-
+renderData(fullData);
 }
 
+// RENDER
+function renderData(data){
 
-/* =========================================
-   MARKET DROPDOWN
-========================================= */
+let html="";
 
-function loadMarkets(){
+data.forEach(item=>{
 
-    const marketSelect =
-        document.getElementById("marketFilter");
+let numbers=[];
 
+try{
+if(!item.data) return;
 
-    const markets = new Set();
+let parsed = typeof item.data==="string" ? JSON.parse(item.data) : item.data;
+if(!Array.isArray(parsed)) parsed=[parsed];
 
+parsed.forEach(p=>{
 
-    fullData.forEach(item => {
+if(!p) return;
 
-        if(item.market){
+let num="";
+let number = p.number ?? p.num ?? null;
+let amount = p.amount ?? p.a ?? p.value ?? 0;
 
-            markets.add(
-                String(item.market).trim()
-            );
+if(number==="TYPING") return;
 
-        }
+if(p.type==="A") num = number+"×";
+else if(p.type==="B") num = "×"+number;
+else if(number!==null) num = String(number).padStart(2,'0');
 
-    });
-
-
-    const sortedMarkets =
-        Array.from(markets).sort();
-
-
-    marketSelect.innerHTML =
-
-        `<option value="">
-            All Market
-        </option>`;
-
-
-    sortedMarkets.forEach(market => {
-
-        const option =
-            document.createElement("option");
-
-        option.value = market;
-
-        option.textContent = market;
-
-        marketSelect.appendChild(option);
-
-    });
-
+if(num!==""){
+numbers.push({
+number:num,
+amount:Number(amount)||0
+});
 }
 
+});
 
-/* =========================================
-   LOAD
-========================================= */
+}catch(e){ return; }
+
+// 🔥 HAR ENTRY PRINT
+numbers.forEach(n=>{
+
+html+=`
+<div class="card">
+
+<div class="row">
+<div class="market">${item.market}</div>
+<div class="amount">₹ ${n.amount}</div>
+</div>
+
+<div>User: ${item.user_id} | Bet No: ${n.number}</div>
+
+<div class="date">
+${new Date(item.created_at).toLocaleString()}
+</div>
+
+</div>
+`;
+
+});
+
+});
+
+document.getElementById("history").innerHTML = html || "No Data Found";
+}
+
+// FILTER
+function filterData(){
+
+let dateVal = document.getElementById("dateFilter").value;
+let marketVal = document.getElementById("marketFilter").value;
+let amtVal = document.getElementById("amountFilter").value;
+
+let filtered = fullData.filter(item=>{
+
+let match = true;
+
+// MARKET
+if(marketVal && item.market !== marketVal){
+match = false;
+}
+
+// DATE
+if(dateVal){
+let itemDate = new Date(item.created_at);
+let today = new Date();
+
+if(dateVal==="today"){
+if(itemDate.toDateString() !== today.toDateString()){
+match = false;
+}
+}
+
+if(dateVal==="yesterday"){
+let y = new Date();
+y.setDate(today.getDate()-1);
+if(itemDate.toDateString() !== y.toDateString()){
+match = false;
+}
+}
+}
+
+// AMOUNT
+if(amtVal){
+let totalAmt = 0;
+
+try{
+let parsed = typeof item.data==="string" ? JSON.parse(item.data) : item.data;
+if(!Array.isArray(parsed)) parsed=[parsed];
+
+parsed.forEach(p=>{
+totalAmt += Number(p.amount ?? p.a ?? p.value ?? 0);
+});
+}catch{}
+
+if(totalAmt < Number(amtVal)){
+match = false;
+}
+}
+
+return match;
+
+});
+
+renderData(filtered);
+}
 
 loadHistory();
 
-
-/* =========================================
-   SEARCH NUMBER
-========================================= */
-
-function searchNumber(){
-
-
-    const numberInput =
-
-        document
-        .getElementById("numberFilter")
-        .value
-        .trim();
-
-
-    const dateFilter =
-
-        document
-        .getElementById("dateFilter")
-        .value;
-
-
-    const marketFilter =
-
-        document
-        .getElementById("marketFilter")
-        .value;
-
-
-    const harfFilter =
-
-        document
-        .getElementById("harfFilter")
-        .value;
-
-
-    /* NUMBER REQUIRED */
-
-    if(numberInput === ""){
-
-        alert("Number daalo");
-
-        return;
-
-    }
-
-
-    /*
-       Example:
-
-       5  -> 05
-       05 -> 05
-       25 -> 25
-    */
-
-    const searchNumber1 =
-        String(Number(numberInput));
-
-
-    const searchNumber2 =
-        String(numberInput).padStart(2,"0");
-
-
-    let results = [];
-
-    let total = 0;
-
-
-    /* =====================================
-       HISTORY LOOP
-    ===================================== */
-
-    fullData.forEach(item => {
-
-
-        /* =================================
-           MARKET FILTER
-        ================================= */
-
-        if(marketFilter){
-
-            const itemMarket =
-                String(item.market || "")
-                .trim();
-
-
-            if(itemMarket !== marketFilter){
-
-                return;
-
-            }
-
-        }
-
-
-        /* =================================
-           DATE FILTER
-        ================================= */
-
-        if(dateFilter){
-
-            const itemDate =
-                new Date(item.created_at);
-
-
-            const today =
-                new Date();
-
-
-            if(dateFilter === "today"){
-
-                if(
-                    itemDate.toDateString()
-                    !==
-                    today.toDateString()
-                ){
-
-                    return;
-
-                }
-
-            }
-
-
-            if(dateFilter === "yesterday"){
-
-                const yesterday =
-                    new Date();
-
-
-                yesterday.setDate(
-                    today.getDate() - 1
-                );
-
-
-                if(
-                    itemDate.toDateString()
-                    !==
-                    yesterday.toDateString()
-                ){
-
-                    return;
-
-                }
-
-            }
-
-        }
-
-
-        /* =================================
-           DATA JSON
-        ================================= */
-
-        let parsed;
-
-
-        try{
-
-            if(!item.data){
-
-                return;
-
-            }
-
-
-            parsed =
-
-                typeof item.data === "string"
-
-                ? JSON.parse(item.data)
-
-                : item.data;
-
-
-            if(!Array.isArray(parsed)){
-
-                parsed = [parsed];
-
-            }
-
-        }
-
-        catch(e){
-
-            console.log(
-                "JSON Error:",
-                e
-            );
-
-            return;
-
-        }
-
-
-        /* =================================
-           EACH ENTRY
-        ================================= */
-
-        parsed.forEach(p => {
-
-
-            if(!p){
-
-                return;
-
-            }
-
-
-            /* =================================
-               NUMBER
-            ================================= */
-
-            const numberValue =
-
-                p.number ??
-                p.num ??
-                null;
-
-
-            if(numberValue === null){
-
-                return;
-
-            }
-
-
-            const numberString =
-                String(numberValue);
-
-
-            const numberPadded =
-                numberString.padStart(2,"0");
-
-
-            const normalNumber =
-                String(
-                    Number(numberString)
-                );
-
-
-            /* =================================
-               NUMBER MATCH
-            ================================= */
-
-            if(
-
-                normalNumber !== searchNumber1
-
-                &&
-
-                numberPadded !== searchNumber2
-
-            ){
-
-                return;
-
-            }
-
-
-            /* =================================
-               A / B
-            ================================= */
-
-            let harf = "";
-
-
-            if(
-                String(p.type).toUpperCase()
-                === "A"
-            ){
-
-                harf = "A";
-
-            }
-
-            else if(
-                String(p.type).toUpperCase()
-                === "B"
-            ){
-
-                harf = "B";
-
-            }
-
-
-            /* =================================
-               A / B FILTER
-            ================================= */
-
-            if(
-
-                harfFilter
-
-                &&
-
-                harf !== harfFilter
-
-            ){
-
-                return;
-
-            }
-
-
-            /* =================================
-               AMOUNT
-            ================================= */
-
-            const amount =
-
-                Number(
-
-                    p.amount ??
-
-                    p.a ??
-
-                    p.value ??
-
-                    0
-
-                );
-
-
-            total += amount;
-
-
-            /* =================================
-               RESULT
-            ================================= */
-
-            results.push({
-
-                id:
-                    item.user_id,
-
-                market:
-                    item.market,
-
-                number:
-                    numberPadded,
-
-                harf:
-                    harf || "-",
-
-                amount:
-                    amount,
-
-                date:
-                    item.created_at
-
-            });
-
-
-        });
-
-
-    });
-
-
-    /* =====================================
-       RENDER
-    ===================================== */
-
-    renderResults(
-        results,
-        total
-    );
-
-}
-
-
-/* =========================================
-   RENDER RESULTS
-========================================= */
-
-function renderResults(
-    data,
-    total
-){
-
-
-    const resultsDiv =
-        document.getElementById("results");
-
-
-    const totalDiv =
-        document.getElementById("totalAmount");
-
-
-    /* TOTAL */
-
-    totalDiv.innerText =
-        "₹ " + total;
-
-
-    /* NO DATA */
-
-    if(data.length === 0){
-
-        resultsDiv.innerHTML =
-
-            `<div class="noData">
-
-                Is Market, A/B aur Number
-                ka data nahi mila
-
-            </div>`;
-
-        return;
-
-    }
-
-
-    let html = "";
-
-
-    /* =====================================
-       CARDS
-    ===================================== */
-
-    data.forEach(item => {
-
-
-        const harfClass =
-
-            item.harf === "A"
-
-            ? "harfA"
-
-            : "harfB";
-
-
-        html += `
-
-        <div class="card">
-
-
-            <div class="top">
-
-
-                <div class="market">
-
-                    ${item.market || "-"}
-
-                </div>
-
-
-                <div class="amount">
-
-                    ₹ ${item.amount}
-
-                </div>
-
-
-            </div>
-
-
-            <div class="info">
-
-
-                <b>User ID:</b>
-
-                ${item.id || "-"}
-
-
-                <br>
-
-
-                <b>Market:</b>
-
-                ${item.market || "-"}
-
-
-                <br>
-
-
-                <b>Number:</b>
-
-                ${item.number}
-
-
-                <br>
-
-
-                <b>A/B:</b>
-
-                <span class="${harfClass}">
-
-                    ${item.harf}
-
-                </span>
-
-
-                <br>
-
-
-                <b>Amount:</b>
-
-                ₹ ${item.amount}
-
-
-            </div>
-
-
-            <div class="dateText">
-
-                ${new Date(
-                    item.date
-                ).toLocaleString()}
-
-            </div>
-
-
-        </div>
-
-        `;
-
-    });
-
-
-    resultsDiv.innerHTML =
-        html;
-
-}
-
 </script>
-
 
 </body>
 </html>
