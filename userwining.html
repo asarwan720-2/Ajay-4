@@ -7,92 +7,246 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{font-family:Arial;background:#f2f2f2;margin:0;}
-.header{background:green;color:#fff;text-align:center;padding:15px;}
-.card{background:#fff;margin:10px;padding:10px;border-radius:10px;}
-.win{color:green;font-weight:bold;}
+body{
+    font-family:Arial;
+    background:#f2f2f2;
+    margin:0;
+}
+
+.header{
+    background:green;
+    color:#fff;
+    text-align:center;
+    padding:15px;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.card{
+    background:#fff;
+    margin:10px;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.win{
+    color:green;
+    font-weight:bold;
+    font-size:20px;
+    margin-top:8px;
+}
+
+.empty{
+    text-align:center;
+    padding:30px 10px;
+    color:#666;
+}
+
+.error{
+    text-align:center;
+    padding:30px 10px;
+    color:red;
+}
 </style>
 </head>
 
 <body>
 
 <div class="header">My Winning</div>
-<div id="list">Loading...</div>
+
+<div id="list">
+    Loading...
+</div>
 
 <script>
 
-// ✅ SUPABASE
+// ================================
+// SUPABASE
+// ================================
+
 const client = window.supabase.createClient(
-"https://katbdbzoufiblnnsoxkk.supabase.co",
-"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+    "https://katbdbzoufiblnnsoxkk.supabase.co",
+    "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
 );
 
-// ✅ GET USER ID (FIXED)
+
+// ================================
+// GET LOGIN USER
+// ================================
+
 let userData = localStorage.getItem("user");
 
 if(!userData){
-    alert("Login first!");
-}
 
-let userId;
+    document.getElementById("list").innerHTML = `
+        <div class="error">
+            Please login first!
+        </div>
+    `;
 
-try{
-    let parsed = JSON.parse(userData);
-    userId = parsed.id;
-}catch{
-    userId = userData;
-}
+}else{
 
-userId = userId ? userId.toString().trim() : "";
+    let userId = "";
 
-console.log("USER ID:", userId);
+    try{
 
-// 🔥 LOAD DATA
-async function loadData(){
+        let parsed = JSON.parse(userData);
 
-    let {data, error} = await client
-        .from("admin wining")
-        .select("*")
-        .eq("user_id", userId)   // ✅ FINAL FIX
-        .order("id",{ascending:false});
+        if(parsed && parsed.id){
+            userId = parsed.id;
+        }
 
-    if(error){
-        console.log("ERROR:", error);
-        document.getElementById("list").innerHTML = "Error loading data";
-        return;
+    }catch(error){
+
+        userId = userData;
+
     }
 
-    console.log("DATA:", data);
 
-    let html = "";
+    userId = userId
+        ? userId.toString().trim()
+        : "";
 
-    if(data && data.length > 0){
+
+    console.log("LOGIN USER ID:", userId);
+
+
+    // ================================
+    // LOAD WINNING
+    // ================================
+
+    async function loadData(){
+
+        if(!userId){
+
+            document.getElementById("list").innerHTML = `
+                <div class="error">
+                    User ID not found. Please login again.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        const { data, error } = await client
+
+            // IMPORTANT:
+            // Supabase table = wining
+
+            .from("wining")
+
+            .select("*")
+
+            // Sirf current login user ka data
+
+            .eq("user_id", userId)
+
+            // Latest winning upar
+
+            .order("id", {
+                ascending:false
+            });
+
+
+        // ================================
+        // ERROR
+        // ================================
+
+        if(error){
+
+            console.log("SUPABASE ERROR:", error);
+
+            document.getElementById("list").innerHTML = `
+                <div class="error">
+                    Error loading winning
+                </div>
+            `;
+
+            return;
+        }
+
+
+        console.log("WINNING DATA:", data);
+
+
+        // ================================
+        // NO DATA
+        // ================================
+
+        if(!data || data.length === 0){
+
+            document.getElementById("list").innerHTML = `
+                <div class="empty">
+                    <h3>No Winning Found</h3>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        // ================================
+        // SHOW DATA
+        // ================================
+
+        let html = "";
+
 
         data.forEach(function(item){
 
             let amount = item.amount || 0;
 
-            let date = item.created_at 
-                ? new Date(item.created_at).toLocaleString()
-                : "No Date";
+
+            let date = "No Date";
+
+            if(item.created_at){
+
+                date = new Date(
+                    item.created_at
+                ).toLocaleString("en-IN");
+
+            }
+
 
             html += `
-            <div class="card">
-                <div><b>Market:</b> ${item.market || "-"}</div>
-                <div><b>Date:</b> ${date}</div>
-                <div class="win">₹ ${amount}</div>
-            </div>
+
+                <div class="card">
+
+                    <div>
+                        <b>Market:</b>
+                        ${item.market || "-"}
+                    </div>
+
+                    <div style="margin-top:6px;">
+                        <b>Date:</b>
+                        ${date}
+                    </div>
+
+                    <div class="win">
+                        ₹ ${amount}
+                    </div>
+
+                </div>
+
             `;
+
         });
 
-    }else{
-        html = "<h3 style='padding:10px;'>No Winning Found</h3>";
+
+        document.getElementById("list").innerHTML = html;
+
     }
 
-    document.getElementById("list").innerHTML = html;
-}
 
-loadData();
+    // ================================
+    // START
+    // ================================
+
+    loadData();
+
+}
 
 </script>
 
